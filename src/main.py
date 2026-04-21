@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from src.db.database import init_db, close_db, get_pool
 
-from src.services.auth import router as auth_router
+from src.api.auth import router as auth_router
 
 # Inicialización de la API y Pool SQL
 @asynccontextmanager

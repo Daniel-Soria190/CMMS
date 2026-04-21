@@ -1,14 +1,13 @@
-from fastapi import APIRouter, HTTPException
-from src.db.database import pool
+from fastapi import HTTPException
+from src.db.database import get_pool
 from src.models.auth import SaltRequest, LoginRequest
 import secrets
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
-router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/salt")
-async def get_salt(data: SaltRequest):
+async def get_salt(data):
+    pool = await get_pool()
 
     if pool is None:
         raise HTTPException(status_code=500, detail="DB no inicializada")
@@ -33,8 +32,8 @@ async def get_salt(data: SaltRequest):
 
 SESSION_DURATION_MINUTES = 30
 
-@router.post("/login")
-async def login(data: LoginRequest):
+async def login(data):
+    pool = await get_pool()
 
     if pool is None:
         raise HTTPException(status_code=500, detail="DB no inicializada")
@@ -49,9 +48,6 @@ async def login(data: LoginRequest):
             """,
             data.username
         )
-
-        # return {"message": "Hello World"}   
-    
 
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
