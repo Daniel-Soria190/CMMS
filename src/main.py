@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
-from src.db.database import *
+from src.db.database import init_db, close_db, get_pool
 
 from src.services.auth import router as auth_router
 
@@ -9,7 +9,10 @@ from src.services.auth import router as auth_router
 async def lifespan(app: FastAPI):
     print("Iniciando API...")
     await init_db()
+    pool = get_pool()
     print("DB lista:", pool is not None)
+
+    print (pool)
 
     yield
 

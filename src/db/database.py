@@ -55,3 +55,7 @@ async def close_db():
     if pool:
         await pool.close()
         print("Pool cerrado")
+
+async def get_pool():
+    global pool
+    return pool
