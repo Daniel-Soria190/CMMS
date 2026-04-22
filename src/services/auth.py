@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from src.db.database import get_pool
-from src.models.auth import SaltRequest, LoginRequest
+#from src.models.auth import SaltRequest, LoginRequest
 import secrets
 from datetime import datetime, timedelta
-from pydantic import BaseModel
+#from pydantic import BaseModel
 
 
 async def get_salt(data):
