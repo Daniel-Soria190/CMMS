@@ -81,3 +81,15 @@ async def login(data):
         "token": token,
         "expires": expires.isoformat()
     }
+
+def generate_JWT():
+    pass
+
+def decode_JWT():
+    pass
+
+def refresh_JWT():
+    pass
+
+def expires_JWT():
+    pass
