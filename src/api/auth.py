@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi.responses import Response
 from src.models.auth import SaltRequest, LoginRequest
-from src.services.auth import get_salt, login
+from src.services.auth_service import get_salt, login
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
