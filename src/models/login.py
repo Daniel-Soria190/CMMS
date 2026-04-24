@@ -8,6 +8,7 @@ class SaltResponse (BaseModel):
     password_salt:str
 
 class LoginRequest (BaseModel):
-    password_hashed:str
+    username:str
+    password_hash:str
 
     
