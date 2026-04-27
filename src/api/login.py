@@ -20,11 +20,7 @@ async def user(q: str):
   q: str;
   Parametro de busqueda (email o correo)
   """
-
-  flag, username = await user_exists(q)
-
-  if flag:
-     return await get_user(username)
+  return await get_user(q)
 
 
 @router.post("/login")

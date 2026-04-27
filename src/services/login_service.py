@@ -40,26 +40,32 @@ async def password_match(user):
         print ( row is not None)
         return row is not None
 
-async def get_user(username):
+async def get_user(q):
+
+    flag, username = await user_exists(q)
+
     pool = await get_pool()
 
     if pool is None:
         raise HTTPException(status_code=500, detail="DB no inicializada")
+    
+    if flag:
        
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            """
-            SELECT username, password_salt
-            FROM public."Usuario"
-            WHERE username= $1
-            """,
-            username
-        )
-        if not row:
-            raise HTTPException(status_code=500, detail="Usuario no encontrado")
-        else:
-            userdata = dict(row)
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT username, password_salt
+                FROM public."Usuario"
+                WHERE username= $1
+                """,
+                username
+            )
+        userdata = dict(row)
         return userdata
 
-def login():
+    else:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+
+async def login(user):
     pass
