@@ -6,3 +6,7 @@ class SaltRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password_hash: str
+
+class TokenResponse (BaseModel):
+    token:str 
+    
