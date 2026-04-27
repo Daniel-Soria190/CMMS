@@ -1,92 +1,38 @@
 from fastapi import HTTPException
-from src.db.database import get_pool
-#from src.models.auth import SaltRequest, LoginRequest
-import secrets
-from datetime import datetime, timedelta
-#from pydantic import BaseModel
+# from src.db.database import get_pool
+from datetime import datetime, timedelta,timezone
+from jose import jwt, JWTError, ExpiredSignatureError
+from src.core.config import *
 
+def generate_JWT(payload, minutes=EXPIRAEN):
+    """
+    Genera un token nuevo dado un payload en base a las variables de entorno
 
-async def get_salt(data):
-    pool = await get_pool()
+    Parametros:
+    -----------
 
-    if pool is None:
-        raise HTTPException(status_code=500, detail="DB no inicializada")
+    payload: dict
 
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            """
-            SELECT password_salt, activo
-            FROM "Usuario"
-            WHERE username = $1
-            """,
-            data.username
-        )
+    Returns:
+    --------
+    token: str
+    """
+    to_encode = payload.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=float(minutes))
+    to_encode.update({"exp": expire})
 
-    if not row:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    token = jwt.encode(to_encode, SECRET, algorithm=ALGORITHM)
 
-    if not row["activo"]:
-        raise HTTPException(status_code=403, detail="Usuario inactivo")
+    return token
 
-    return {"salt": row["password_salt"]}
-
-SESSION_DURATION_MINUTES = 30
-
-async def login(data):
-    pool = await get_pool()
-
-    if pool is None:
-        raise HTTPException(status_code=500, detail="DB no inicializada")
-
-    async with pool.acquire() as conn:
-
-        user = await conn.fetchrow(
-            """
-            SELECT "idUsuario", password_hash, activo
-            FROM "Usuario"
-            WHERE username = $1
-            """,
-            data.username
-        )
-
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-        if not user["activo"]:
-            raise HTTPException(status_code=403, detail="Usuario inactivo")
-
-        # validación de hash (ya viene del cliente)
-        if user["password_hash"] != data.password_hash:
-            raise HTTPException(status_code=401, detail="Credenciales inválidas")
-
-        # generar token
-        token = secrets.token_urlsafe(32)
-
-        now = datetime.utcnow()
-        expires = now + timedelta(minutes=SESSION_DURATION_MINUTES)
-
-        await conn.execute(
-            """
-            INSERT INTO "Sesion"
-            ("idUsuario", "token", "fechaCreacion", "ultimaActividad", "expiraEn", "activa")
-            VALUES ($1, $2, $3, $3, $4, TRUE)
-            """,
-            user["idUsuario"],
-            token,
-            now,
-            expires
-        )
-
-    return {
-        "token": token,
-        "expires": expires.isoformat()
-    }
-
-def generate_JWT():
-    pass
-
-def decode_JWT():
-    pass
+def decode_JWT(token:str):
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
+        return payload
+    except ExpiredSignatureError:
+        return "Token expirado"
+    except JWTError:
+        return "Token inválido"
 
 def refresh_JWT():
     pass
