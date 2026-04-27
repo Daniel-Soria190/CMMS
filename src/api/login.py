@@ -1,14 +1,30 @@
 from fastapi import APIRouter 
 from fastapi import HTTPException
 from fastapi.responses import Response
-from src.models.login import UserRequest, LoginRequest
-from src.services.login_service import user_exists, password_match
+from src.models.login import UserRequest, LoginRequest, SaltResponse
+from src.services.login_service import user_exists, password_match, get_user
 
 router = APIRouter(prefix="/login", tags=["login"])
 
-@router.get("/user/")
+@router.get("/user/", response_model=SaltResponse,
+            summary="Buscar usuario",
+            description="Busca un usuario por username o email en la BD",
+            response_description="username, password_salt"
+            )
 async def user(q: str):
-  return await user_exists(q) #modificar la funcion para retornal el salt y username
+  """
+  Busca un usuario por username o email
+
+  Parametros:
+  -----------
+  q: str;
+  Parametro de busqueda (email o correo)
+  """
+
+  flag, username = await user_exists(q)
+
+  if flag:
+     return await get_user(username)
 
 
 @router.post("/login")
