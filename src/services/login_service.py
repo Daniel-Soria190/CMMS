@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from src.db.database import get_pool
 
-async def user_exists(user):
+async def user_exists(q):
     pool = await get_pool()
 
     if pool is None:
@@ -12,10 +12,9 @@ async def user_exists(user):
             """
             SELECT username, email
             FROM public."Usuario"
-            WHERE username= $1 or email = $2;
+            WHERE username= $1 or email = $1;
             """,
-            user.username,
-            user.email
+            q
         )
         print (row is not None)
         return row is not None

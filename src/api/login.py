@@ -6,9 +6,10 @@ from src.services.login_service import user_exists, password_match
 
 router = APIRouter(prefix="/login", tags=["login"])
 
-@router.post("/user")
-async def user(user_datos:UserRequest):
-  return await user_exists(user_datos) #modificar la funcion para retornal el salt y username
+@router.get("/user/")
+async def user(q: str):
+
+  return await user_exists(q) #modificar la funcion para retornal el salt y username
 
 
 @router.post("/login")
