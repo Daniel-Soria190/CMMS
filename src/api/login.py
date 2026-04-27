@@ -2,7 +2,8 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi.responses import Response
 from src.models.login import UserRequest, LoginRequest, SaltResponse
-from src.services.login_service import user_exists, password_match, get_user
+from src.services.login_service import user_exists, password_match, get_user, user_login
+from src.models.auth import TokenResponse
 
 router = APIRouter(prefix="/login", tags=["login"])
 
@@ -24,5 +25,5 @@ async def user(q: str):
 
 
 @router.post("/login")
-async def login(login_password:LoginRequest):
-    return await password_match(login_password)
+async def login(login_password:LoginRequest, response_model=TokenResponse):
+    return await user_login(login_password)

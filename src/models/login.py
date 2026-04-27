@@ -5,11 +5,11 @@ class UserRequest(BaseModel):
     email:str
 
 class SaltResponse (BaseModel):
-    username: str = Field(description="Nombre de usuario")
+    idUsuario: int = Field(description="ID de usuario")
     password_salt:str = Field(description="Salt de la contraseña")
 
 class LoginRequest (BaseModel):
-    username:str
+    idUsuario: int
     password_hash:str
 
     

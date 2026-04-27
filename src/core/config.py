@@ -8,3 +8,7 @@ PORT = os.getenv("PORT")
 DBUSER = os.getenv('DBUSER')
 PASSWORD = os.getenv('PASSWORD')
 DATABASE = os.getenv('DATABASE')
+
+SECRET = os.getenv('SECRET')
+ALGORITHM = os.getenv('ALGORITHM')
+EXPIRAEN = os.getenv('EXPIRAEN')

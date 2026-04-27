@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from src.db.database import init_db, close_db, get_pool
 
-from src.api.auth import router as auth_router
 from src.api.users import router as users_router
 from src.api.login import router as login_router
 
