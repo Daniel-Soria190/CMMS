@@ -8,7 +8,6 @@ router = APIRouter(prefix="/login", tags=["login"])
 
 @router.get("/user/")
 async def user(q: str):
-
   return await user_exists(q) #modificar la funcion para retornal el salt y username
 
 
