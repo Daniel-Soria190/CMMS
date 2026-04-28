@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 from src.db.database import get_pool
-from src.services.auth_service import generate_JWT, decode_JWT
-
+from src.services.auth_service import generate_JWT, decode_JWT   
 
 
 async def equipo_exists(equipo):

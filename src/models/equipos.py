@@ -9,3 +9,4 @@ class equipoRequest(BaseModel):
     idFuncion:int
     idRiesgo:int
     idReqMto:int
+
