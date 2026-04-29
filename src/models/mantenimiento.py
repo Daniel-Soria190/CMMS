@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field
 from datetime import datetime 
+from typing import Optional
+from fastapi import Query 
+
 
 class ManttoRequest (BaseModel):
     idOrden:int 
@@ -9,14 +12,8 @@ class ManttoRequest (BaseModel):
     descripcion:str
     rPorExt:int
 
-class ManttoResponse(BaseModel):
-    idMantenimiento:int
-    idOrden:int 
-    tipo:str
-    Fi:datetime
-    Ff:datetime
-    rPor:int
-    vPor:int 
-    externo:bool
-    descripcion:str
-    rPorExt:int
+
+
+
+
+
