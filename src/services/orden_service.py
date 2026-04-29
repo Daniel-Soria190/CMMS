@@ -16,41 +16,41 @@ async def search (idOrden,idEquipoInstall,
     or_conditions = []
     values = []
 
-    # 🔹 AND (filtros principales)
+    # AND (filtros)
     if idOrden is not None:
         and_conditions.append(f""" "idOrden" = ${len(values)+1}""")
         values.append(idOrden)
 
     if estado is not None:
-        and_conditions.append(f""" estado = ${len(values)+1}""")
+        and_conditions.append(f""" "estado" = ${len(values)+1}""")
         values.append(estado)
 
     if fechaSoli is not None:
-        and_conditions.append(f""" "fechaSoli" = ${len(values)+1}""")
+        and_conditions.append(f""" "fechaSolicitud" = ${len(values)+1}""")
         values.append(fechaSoli)
 
     if fechaEnt is not None:
-        and_conditions.append(f""" "fechaEnt"= ${len(values)+1}""")
+        and_conditions.append(f""" "fechaEntrega"= ${len(values)+1}""")
         values.append(fechaEnt)
 
-    # 🔹 OR (filtros alternativos)
+    # OR (filtros alternativos)
     if prioridad is not None:
-        or_conditions.append(f""" prioridad = ${len(values)+1}""")
+        or_conditions.append(f""" "prioridad" = ${len(values)+1}""")
         values.append(prioridad)
 
     if idEquipoInstall is not None:
-        or_conditions.append(f""" "idEquipoInstall" = ${len(values)+1}""")
+        or_conditions.append(f""" "idEquipoInstalado" = ${len(values)+1}""")
         values.append(idEquipoInstall)
 
     if asignadoa is not None:
-        or_conditions.append(f"""asignadoa = ${len(values)+1}""")
+        or_conditions.append(f""" "asignadoA" = ${len(values)+1}""")
         values.append(asignadoa)
 
     if creadopor is not None:
-        or_conditions.append(f"""creadopor = ${len(values)+1}""")
+        or_conditions.append(f""" "creadoPorUsuario" = ${len(values)+1}""")
         values.append(creadopor)
 
-    # 🔹 Construir WHERE
+    # Construir WHERE
     if and_conditions or or_conditions:
         base_query += " WHERE "
 
@@ -70,12 +70,6 @@ async def search (idOrden,idEquipoInstall,
         return aux
     else:
         return HTTPException(status_code=404, detail="orden no encontrada") 
-
-
-
-
-
-
 
 async def set_orden(orden):
     pool = await get_pool()

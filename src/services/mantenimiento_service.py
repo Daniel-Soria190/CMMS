@@ -18,7 +18,7 @@ async def search (idOrden,tipo,
     values = []
 
     if idOrden is not None:
-        and_conditions.append(f"idOrden = ${len(values)+1}")
+        and_conditions.append(f""" "idOrden" = ${len(values)+1}""")
         values.append(idOrden)
 
     if tipo is not None:
@@ -26,20 +26,20 @@ async def search (idOrden,tipo,
         values.append(tipo)
 
     if Fi is not None:
-        and_conditions.append(f"fechaInicio >= ${len(values)+1}")
+        and_conditions.append(f""" "fechaInicio" >= ${len(values)+1}""")
         values.append(Fi)
 
     if Ff is not None:
-        and_conditions.append(f"fechaFin <= ${len(values)+1}")
+        and_conditions.append(f""" "fechaFin" <= ${len(values)+1}""")
         values.append(Ff)
 
     # 🔹 OR (flexibles)
     if rPor is not None:
-        or_conditions.append(f"realizadoPor = ${len(values)+1}")
+        or_conditions.append(f""" "realizadoPor" = ${len(values)+1}""")
         values.append(rPor)
 
     if vPor is not None:
-        or_conditions.append(f"verificadoPor = ${len(values)+1}")
+        or_conditions.append(f""" "verificadoPor" = ${len(values)+1}""")
         values.append(vPor)
 
     if externo is not None:
@@ -47,7 +47,7 @@ async def search (idOrden,tipo,
         values.append(externo)
 
     if rPorExt is not None:
-        or_conditions.append(f"realizadoPorExterno = ${len(values)+1}")
+        or_conditions.append(f""" "realizadoPorExterno" = ${len(values)+1}""")
         values.append(rPorExt)
 
     # 🔹 Construcción final
@@ -71,9 +71,6 @@ async def search (idOrden,tipo,
         return aux
     else:
         return HTTPException(status_code=404, detail="orden no encontrada") 
-
-
-
 
 
 #Revisar si es necesario identificar si ya existe un mantenimiento por medio 

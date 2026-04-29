@@ -24,8 +24,6 @@ async def buscar_orden (
     return await search (idOrden,idEquipoInstall,prioridad,estado,fechaSoli,fechaEnt,asignadoa,creadopor)
 
 
-
-
 @router.post("/Crear orden/")
 async def orden( orden:ordenRequest):
     return await set_orden(orden)
