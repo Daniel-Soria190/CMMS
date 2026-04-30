@@ -16,8 +16,8 @@ async def enviar_notificacion_prueba(user_id: int, mensaje: str = "Nueva actuali
     """
     # 1. Simulamos el cambio incremental que mencionaste
     payload = {
-        "event": "TABLA_ACTUALIZADA",
-        "tabla": "equipoInstalado",
+        "event": "Notificación Nueva",
+        "tabla": "notificaciones",
         "data": {
             "idEquipoInstalado": 101,
             "nuevo_estado": "Mantenimiento",
