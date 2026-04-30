@@ -72,7 +72,7 @@ async def user_login(user):
     if await password_match(user):
         payload = {"idUsuario": user.idUsuario}
         token = generate_JWT(payload)
-        print(token)
-        return token
+        # print(token)
+        return {"token":token}
     else:
         raise HTTPException(status_code=404, detail="Contraseña incorrecta")
