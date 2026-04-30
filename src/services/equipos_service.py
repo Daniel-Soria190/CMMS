@@ -3,6 +3,47 @@ from src.db.database import get_pool
 from src.services.auth_service import generate_JWT, decode_JWT   
 
 
+async def search (nombre, marca, modelo):
+    pool = await get_pool()
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB no inicializada") 
+
+    base_query = 'SELECT * FROM public."Equipo"'
+    filters = []
+    values = []
+
+    # Construcción dinámica
+    if nombre:
+        filters.append(f"nombre ILIKE ${len(values)+1}")
+        values.append(f"%{nombre}%")
+
+    if marca:
+        filters.append(f"marca ILIKE ${len(values)+1}")
+        values.append(f"%{marca}%")
+
+    if modelo:
+        filters.append(f"modelo ILIKE ${len(values)+1}")
+        values.append(f"%{modelo}%")
+
+    if filters:
+        base_query += " WHERE " + " AND ".join(filters)
+
+    rows = await pool.fetch(base_query, *values)
+
+    aux= [dict(row) for row in rows]
+
+    if aux:
+        return aux
+    else:
+        return HTTPException(status_code=404, detail="equipo no encontrado") 
+
+    #return [dict(row) for row in rows]
+
+
+
+
+
+
 async def equipo_exists(equipo):
     pool = await get_pool()
 
