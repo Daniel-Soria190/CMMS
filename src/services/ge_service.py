@@ -8,8 +8,7 @@ async def get_funcion ():
     if pool is None:
         raise HTTPException(status_code=500, detail="DB no inicializada") 
     
-    async with pool.acquire() as conn:
-        
+    async with pool.acquire() as conn:    
         rows = await conn.fetch(
            """
             SELECT "idFuncion", categoria, funcion, peso

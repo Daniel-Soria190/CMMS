@@ -37,7 +37,7 @@ async def search (nombre, marca, modelo):
     else:
         return HTTPException(status_code=404, detail="equipo no encontrado") 
 
-    return [dict(row) for row in rows]
+    #return [dict(row) for row in rows]
 
 
 
