@@ -14,7 +14,7 @@ class EquipoRequest(BaseModel):
 
 
 class EquipoUpdate (BaseModel):
-    idEquipo:int
+    # idEquipo:int
     nombre:str
     marca:str 
     modelo:str

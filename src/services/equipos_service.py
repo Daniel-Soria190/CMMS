@@ -40,7 +40,7 @@ async def search (nombre, marca, modelo):
     #return [dict(row) for row in rows]
 
 
-async def update(equipo):
+async def update(idEquipo, equipo):
     pool= await get_pool()
 
     if pool is None:
@@ -57,7 +57,7 @@ async def update(equipo):
                 "idRiesgo"=$8,"idReqMto"=$9
                 WHERE "idEquipo"= $1;
                 """,
-                equipo.idEquipo,
+                idEquipo,
                 equipo.nombre,
                 equipo.marca, 
                 equipo.modelo,
