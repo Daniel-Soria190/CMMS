@@ -40,7 +40,34 @@ async def search (nombre, marca, modelo):
     #return [dict(row) for row in rows]
 
 
+async def update(equipo):
+    pool= await get_pool()
 
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+
+    
+    async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                UPDATE public."Equipo"
+                SET nombre=$2,marca=$3, 
+                modelo=$4,descripcion=$5, 
+                "tiempoVidaEstimado"=$6,"idFuncion"=$7,  
+                "idRiesgo"=$8,"idReqMto"=$9
+                WHERE "idEquipo"= $1;
+                """,
+                equipo.idEquipo,
+                equipo.nombre,
+                equipo.marca, 
+                equipo.modelo,
+                equipo.descripcion,
+                equipo.t_vida,  
+                equipo.idFuncion, 
+                equipo.idRiesgo, 
+                equipo.idReqMto   
+            )
+            return {"staus": "Equipo actualizado con exito"}
 
 
 

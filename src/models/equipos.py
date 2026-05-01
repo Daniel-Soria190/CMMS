@@ -13,7 +13,10 @@ class EquipoRequest(BaseModel):
 
 
 
-class EquipoResponse (BaseModel):
+
+
+class EquipoUpdate (BaseModel):
+    idEquipo:int
     nombre:str
     marca:str 
     modelo:str

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Query
 from fastapi import HTTPException 
 from fastapi.responses import Response
-from src.models.equipos import EquipoRequest
-from src.services.equipos_service import set_equipo, search
+from src.models.equipos import EquipoRequest,EquipoUpdate
+from src.services.equipos_service import set_equipo, search, update
 from src.models.auth import TokenResponse
 from typing import Optional
 
@@ -16,6 +16,9 @@ async def buscar_equipo (
 ):
     return await search (nombre,marca,modelo)
 
+@router.put ("/update/")
+async def update_equipo(equipo:EquipoUpdate):
+    return await update(equipo)
 
 
 @router.post("/equipo/")
