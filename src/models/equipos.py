@@ -13,8 +13,6 @@ class EquipoRequest(BaseModel):
 
 
 
-
-
 class EquipoUpdate (BaseModel):
     idEquipo:int
     nombre:str
