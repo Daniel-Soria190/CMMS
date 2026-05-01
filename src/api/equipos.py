@@ -16,9 +16,9 @@ async def buscar_equipo (
 ):
     return await search (nombre,marca,modelo)
 
-@router.put ("/update/")
-async def update_equipo(equipo:EquipoUpdate):
-    return await update(equipo)
+@router.patch ("/equipos/{idEquipo}")
+async def update_equipo(id:int ,equipo:EquipoUpdate):
+    return await update(id,equipo)
 
 
 @router.post("/equipo/")
