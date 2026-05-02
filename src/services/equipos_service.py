@@ -46,30 +46,8 @@ async def update(idEquipo, equipo):
     if pool is None:
        raise HTTPException(status_code=500, detail="DB no inicializada") 
 
-
-    aux= equipo.dict()
-
-    data = {
-        k: v for k, v in aux.items()
-        if v not in ("string", "", None, 0)
-    }
     
-    if not data:
-        raise HTTPException(status_code=400, detail="Nada para actualizar")
-    
-
-    
-    update_data = ", ".join(
-    [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
-    )
-    query = f'UPDATE public."Equipo" SET {update_data} WHERE "idEquipo" = ${len(data)+1}'
-
-    values = list(data.values())
-    values.append(id)
-
     async with pool.acquire() as conn:
-            await conn.execute(
-            query,*values
             row = await conn.fetchrow(
                 """
                 UPDATE public."Equipo"
