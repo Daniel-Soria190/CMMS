@@ -1,43 +1,74 @@
 from fastapi import HTTPException
-from src.db.database import get_pool
+from src.db.database import get_pool, build_dynamic_query
 from src.services.auth_service import generate_JWT, decode_JWT   
 
-
-async def search (nombre, marca, modelo):
+async def search(params: dict, limit: int = 10, offset: int = 0):
     pool = await get_pool()
     if pool is None:
-        raise HTTPException(status_code=500, detail="DB no inicializada") 
+        raise HTTPException(status_code=500, detail="DB no inicializada")
 
-    base_query = 'SELECT * FROM public."Equipo"'
-    filters = []
-    values = []
+    # 1. Definir columnas permitidas
+    WHITELIST = ["nombre", "marca", "modelo"]
 
-    # Construcción dinámica
-    if nombre:
-        filters.append(f"nombre ILIKE ${len(values)+1}")
-        values.append(f"%{nombre}%")
+    # 2. Construir WHERE dinámico
+    where_str, values = build_dynamic_query(params, WHITELIST)
 
-    if marca:
-        filters.append(f"marca ILIKE ${len(values)+1}")
-        values.append(f"%{marca}%")
+    # 3. Construir query final con paginación
+    # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
+    sql = f"""
+        SELECT * FROM public."Equipo"
+        {where_str}
+        ORDER BY "idEquipo"  -- Recomendado para que la paginación sea consistente
+        LIMIT ${len(values) + 1} OFFSET ${len(values) + 2}
+    """
+    
+    # Añadimos los valores de paginación a la lista de argumentos
+    full_values = [*values, limit, offset]
 
-    if modelo:
-        filters.append(f"modelo ILIKE ${len(values)+1}")
-        values.append(f"%{modelo}%")
+    rows = await pool.fetch(sql, *full_values)
+    
+    if not rows:
+        # Nota: Es mejor devolver lista vacía [] que un 404 en búsquedas, 
+        # pero mantengo tu lógica si así lo prefieres.
+        raise HTTPException(status_code=404, detail="Equipo no encontrado")
 
-    if filters:
-        base_query += " WHERE " + " AND ".join(filters)
+    return [dict(row) for row in rows]
 
-    rows = await pool.fetch(base_query, *values)
+# async def search (nombre, marca, modelo):
+#     pool = await get_pool()
+#     if pool is None:
+#         raise HTTPException(status_code=500, detail="DB no inicializada") 
 
-    aux= [dict(row) for row in rows]
+#     base_query = 'SELECT * FROM public."Equipo"'
+#     filters = []
+#     values = []
 
-    if aux:
-        return aux
-    else:
-        return HTTPException(status_code=404, detail="Equipo no encontrado") 
+#     # Construcción dinámica
+#     if nombre:
+#         filters.append(f"nombre ILIKE ${len(values)+1}")
+#         values.append(f"%{nombre}%")
 
-    #return [dict(row) for row in rows]
+#     if marca:
+#         filters.append(f"marca ILIKE ${len(values)+1}")
+#         values.append(f"%{marca}%")
+
+#     if modelo:
+#         filters.append(f"modelo ILIKE ${len(values)+1}")
+#         values.append(f"%{modelo}%")
+
+#     if filters:
+#         base_query += " WHERE " + " AND ".join(filters)
+
+#     rows = await pool.fetch(base_query, *values)
+
+#     aux= [dict(row) for row in rows]
+
+#     if aux:
+#         return aux
+#     else:
+#         return HTTPException(status_code=404, detail="Equipo no encontrado") 
+
+#     #return [dict(row) for row in rows]
 
 
 async def update(id, equipo):

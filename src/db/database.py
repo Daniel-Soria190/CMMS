@@ -59,3 +59,22 @@ async def close_db():
 async def get_pool():
     global pool
     return pool
+
+def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
+    conditions = []
+    values = []
+    counter = 1
+
+    for key, value in params.items():
+        if key in whitelist and value is not None:
+            # Usamos ILIKE para búsquedas parciales
+            conditions.append(f"{key} ILIKE ${counter}")
+            # Añadimos los % aquí para no ensuciar el endpoint
+            values.append(f"%{value}%")
+            counter += 1
+
+    where_clause = ""
+    if conditions:
+        where_clause = " WHERE " + " AND ".join(conditions)
+    
+    return where_clause, values
