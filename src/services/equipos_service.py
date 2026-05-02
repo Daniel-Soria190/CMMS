@@ -35,12 +35,43 @@ async def search (nombre, marca, modelo):
     if aux:
         return aux
     else:
-        return HTTPException(status_code=404, detail="equipo no encontrado") 
+        return HTTPException(status_code=404, detail="Equipo no encontrado") 
 
     #return [dict(row) for row in rows]
 
 
+async def update(id, equipo):
+    pool= await get_pool()
 
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+
+
+    aux= equipo.dict()
+
+    data = {
+        k: v for k, v in aux.items()
+        if v not in ("string", "", None, 0)
+    }
+    
+    if not data:
+        raise HTTPException(status_code=400, detail="Nada para actualizar")
+    
+
+    
+    update_data = ", ".join(
+    [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
+    )
+    query = f'UPDATE public."Equipo" SET {update_data} WHERE "idEquipo" = ${len(data)+1}'
+
+    values = list(data.values())
+    values.append(id)
+
+    async with pool.acquire() as conn:
+            await conn.execute(
+            query,*values
+            )
+            return {"staus": "Equipo actualizado con exito"}
 
 
 
@@ -63,6 +94,24 @@ async def equipo_exists(equipo):
 
         return row is not None 
     
+async def get_Equipo(idEquipo):
+    pool = await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."Equipo"
+            WHERE "idEquipo" =$1;
+            """,
+            idEquipo,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Equipo no encontrado")
+
+        return dict(row)
 
 async def set_equipo(equipo):
     pool = await get_pool()

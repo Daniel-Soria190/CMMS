@@ -7,7 +7,7 @@ from src.models.auth import TokenResponse
 
 router = APIRouter(prefix="/login", tags=["login"])
 
-@router.get("/user/", response_model=SaltResponse,
+@router.get("/", response_model=SaltResponse,
             summary="Buscar usuario",
             description="Busca un usuario por username o email en la BD",
             response_description="username, password_salt"
@@ -24,6 +24,6 @@ async def user(q: str):
   return await get_user(q)
 
 
-@router.post("/login")
+@router.post("/")
 async def login(login_password:LoginRequest, response_model=TokenResponse):
     return await user_login(login_password)

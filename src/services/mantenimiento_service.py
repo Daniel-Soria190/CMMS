@@ -33,7 +33,7 @@ async def search (idOrden,tipo,
         and_conditions.append(f""" "fechaFin" <= ${len(values)+1}""")
         values.append(Ff)
 
-    # 🔹 OR (flexibles)
+    # OR (flexibles)
     if rPor is not None:
         or_conditions.append(f""" "realizadoPor" = ${len(values)+1}""")
         values.append(rPor)
@@ -50,7 +50,7 @@ async def search (idOrden,tipo,
         or_conditions.append(f""" "realizadoPorExterno" = ${len(values)+1}""")
         values.append(rPorExt)
 
-    # 🔹 Construcción final
+    #  Construcción final
     if and_conditions or or_conditions:
         base_query += " WHERE "
 
