@@ -8,7 +8,7 @@ from typing import Optional
 
 router = APIRouter(prefix="/equipos", tags=["equipos"])
 
-@router.get ( "/search/")
+@router.get ( "/")
 async def buscar_equipo (
     nombre: Optional[str] = Query(None),
     marca: Optional[str] = Query(None),
@@ -16,12 +16,12 @@ async def buscar_equipo (
 ):
     return await search (nombre,marca,modelo)
 
-@router.patch ("/equipos/{idEquipo}")
-async def update_equipo(id:int ,equipo:EquipoUpdate):
-    return await update(id,equipo)
+@router.put ("/{idEquipo}")
+async def update_equipo(idEquipo:int, equipo:EquipoUpdate):
+    return await update(idEquipo, equipo)
 
 
-@router.post("/equipo/")
+@router.post("/")
 async def equipo( equipo:EquipoRequest):
     return await set_equipo(equipo)
 
