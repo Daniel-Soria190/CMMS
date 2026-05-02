@@ -11,15 +11,12 @@ class EquipoRequest(BaseModel):
     idRiesgo:int
     idReqMto:int
 
-
-
 class EquipoUpdate (BaseModel):
-    # idEquipo:int
-    nombre:str
-    marca:str 
-    modelo:str
-    descripcion:str
-    t_vida:str
-    idFuncion:int
-    idRiesgo:int
-    idReqMto:int
+    nombre:Optional[str]= Field(default=None)
+    marca:Optional[str]=Field(default=None)
+    modelo:Optional[str]=Field(default=None)
+    descripcion:Optional[str]=Field(default=None)
+    tiempoVidaEstimado:Optional[str]=Field(default=None)
+    idFuncion:Optional[int]=Field(default=None)
+    idRiesgo:Optional[int]=Field(default=None)
+    idReqMto:Optional[int]=Field(default=None)
