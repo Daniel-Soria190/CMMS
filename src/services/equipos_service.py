@@ -35,7 +35,7 @@ async def search (nombre, marca, modelo):
     if aux:
         return aux
     else:
-        return HTTPException(status_code=404, detail="equipo no encontrado") 
+        return HTTPException(status_code=404, detail="Equipo no encontrado") 
 
     #return [dict(row) for row in rows]
 
@@ -94,6 +94,24 @@ async def equipo_exists(equipo):
 
         return row is not None 
     
+async def get_Equipo(idEquipo):
+    pool = await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."Equipo"
+            WHERE "idEquipo" =$1;
+            """,
+            idEquipo,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Equipo no encontrado")
+
+        return dict(row)
 
 async def set_equipo(equipo):
     pool = await get_pool()

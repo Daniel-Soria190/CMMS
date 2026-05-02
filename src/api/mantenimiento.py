@@ -10,7 +10,7 @@ from datetime import datetime
 router = APIRouter(prefix="/mantenimientos", tags=["mantenimientos"])
 # Esta ocurriendo un erro en esta parte, muy probablemente con los formatos del datetime.
 
-@router.get ( "/search/")
+@router.get ( "/")
 async def buscar_mantenimiento (
     idOrden:Optional[int]= Query(None),
     tipo:Optional[str]=Query(None),
@@ -24,6 +24,6 @@ async def buscar_mantenimiento (
     ):
     return await search(idOrden,tipo,Fi,Ff,rPor,vPor,externo,rPorExt)
 
-@router.post("/mantenimiento/")
+@router.post("/")
 async def mantto( mantto:ManttoRequest):
     return await set_mantto(mantto)

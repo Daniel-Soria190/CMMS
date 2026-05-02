@@ -9,4 +9,3 @@ class LoginRequest(BaseModel):
 
 class TokenResponse (BaseModel):
     token:str 
-    
