@@ -10,14 +10,16 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
         raise HTTPException(status_code=500, detail="DB no inicializada")
 
     # 1. Definir columnas permitidas
-    WHITELIST = [""" "idOrden" """,  "tipo", 
-                 """ "fechaInicio" """,""" "fechaFin" """,
-                 """ "realizadoPor" """,""" "verificadoPor" """,
-                 "externo" ,""" "realizadoPorExterno" """]
-
+    WHITELIST = [ ' "idOrden" ',  "tipo", 
+                 ' "fechaInicio" ',' "fechaFin" ',
+                 ' "realizadoPor" ',' "verificadoPor" ',
+                 "externo" ,' "realizadoPorExterno" ']
+    
+    print(params)
     # 2. Construir WHERE dinámico
     where_str, values = build_dynamic_query(params, WHITELIST)
-
+    print (where_str)
+    print(values)
     # 3. Construir query final con paginación
     # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
     sql = f"""

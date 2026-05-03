@@ -6,7 +6,7 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
     pool = await get_pool()
     if pool is None:
         raise HTTPException(status_code=500, detail="DB no inicializada")
-
+ 
     # 1. Definir columnas permitidas
     WHITELIST = ["nombre", "marca", "modelo"]
 
