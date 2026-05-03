@@ -36,9 +36,11 @@ async def buscar_orden(
     
     return await search(query_data, limit, offset)
 
+
 @router.get("/{idOrden}")
 async def obtener_orden (idOrden:int):
     return await get_orden(idOrden)
+
 
 @router.post("/")
 async def orden( orden:ordenRequest):
