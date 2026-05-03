@@ -6,6 +6,6 @@ from src.services.users_service import set_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.post ("/user")
+@router.post ("/")
 async def user(user: UserRequest):
     return await set_user(user)

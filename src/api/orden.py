@@ -10,7 +10,7 @@ from datetime import datetime
 
 router = APIRouter(prefix="/orden", tags=["orden"])
 
-@router.get ( "/search/")
+@router.get ( "/")
 async def buscar_orden (
     idOrden: Optional[int] = Query(None),
     idEquipoInstall: Optional[int] = Query(None),
@@ -24,6 +24,6 @@ async def buscar_orden (
     return await search (idOrden,idEquipoInstall,prioridad,estado,fechaSoli,fechaEnt,asignadoa,creadopor)
 
 
-@router.post("/Crear orden/")
+@router.post("/")
 async def orden( orden:ordenRequest):
     return await set_orden(orden)

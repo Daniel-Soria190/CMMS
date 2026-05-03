@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime 
 from typing import Optional
-from fastapi import Query 
+
 
 
 class ManttoRequest (BaseModel):
@@ -12,8 +12,14 @@ class ManttoRequest (BaseModel):
     descripcion:str
     rPorExt:int
 
-
-
-
+class MattoParams(BaseModel):
+    idOrden: Optional[int]= None
+    tipo: Optional[str]=None
+    fechaInicio: Optional[datetime]=None
+    fechaFin: Optional[datetime]=None
+    realizadoPor: Optional[int]=None
+    verificadoPor: Optional[int]=None
+    externo: Optional[bool]=None
+    realizadoPorExterno: Optional[int]=None
 
 
