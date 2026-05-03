@@ -36,7 +36,7 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
     if not rows:
         # Nota: Es mejor devolver lista vacía [] que un 404 en búsquedas, 
         # pero mantengo tu lógica si así lo prefieres.
-        raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
+        raise HTTPException(status_code=404, detail= "Mantenimiento no encontrado")
 
     return [dict(row) for row in rows]
 
