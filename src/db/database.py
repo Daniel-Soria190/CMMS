@@ -77,7 +77,7 @@ def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
 
         # STR → búsqueda parcial
         if isinstance(value, str):
-            conditions.append(f"{key} ILIKE ${counter}")
+            conditions.append(f'"{key}" ILIKE ${counter}')
             values.append(f"%{value}%")
 
         # BOOL → igualdad
@@ -87,12 +87,12 @@ def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
 
         # INT / FLOAT → igualdad
         elif isinstance(value, (int, float,bool)):
-            conditions.append(f"{key} = ${counter}")
+            conditions.append(f'"{key}" = ${counter}')
             values.append(value)
 
         # DATETIME / DATE → igualdad (básico)
         elif isinstance(value, (datetime, date)):
-            conditions.append(f"{key} = ${counter}")
+            conditions.append(f'"{key}" = ${counter}')
             values.append(value)
 
         # LIST → IN (...)
