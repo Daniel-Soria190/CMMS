@@ -42,19 +42,25 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
 #=======================================================================================
 
 
+async def get_user(idUser):
+    pool = await get_pool()
 
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."Usuario"
+            WHERE "idUsuario" =$1;
+            """,
+            idUser,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
 
-
-
-
-
-
-
-
-
-
-
-
+        return dict(row)
+#=================================================================================================
 
 
 

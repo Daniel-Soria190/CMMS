@@ -2,7 +2,7 @@ from fastapi import APIRouter,Query,Depends
 from fastapi import HTTPException
 from fastapi.responses import Response
 from src.models.users import UserRequest,userParams,userUpdate
-from src.services.users_service import set_user,search
+from src.services.users_service import set_user,search,get_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -22,8 +22,11 @@ async def buscar_user (
 
 #=========================================================================================
 
+@router.get("/{idUser}")
+async def obtener_user (idUser:int):
+    return await get_user(idUser)
 
-
+#=========================================================================
 
 @router.post ("/")
 async def user(user: UserRequest):

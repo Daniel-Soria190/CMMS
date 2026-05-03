@@ -109,7 +109,7 @@ async def update(id, Matto):
     if pool is None:
        raise HTTPException(status_code=500, detail="DB no inicializada") 
 
-    if await id_exist(id): #devuelve vacion o bien se puede agregar un error 404
+    if await id_exist(id): #devuelve vacio o bien se puede agregar un error 404
 
         aux= Matto.dict()
 

@@ -23,7 +23,6 @@ class userUpdate(BaseModel):
     isDeleted:Optional[bool]=None
 
 class userParams(BaseModel):
-
     nombre: Optional[str] = None
     apellido: Optional[str] = None
     username:Optional[str]=None
