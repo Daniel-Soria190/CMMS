@@ -22,8 +22,6 @@ class ordenUpdate(BaseModel):
     fechaEntrega:Optional[datetime]=None
     asignadoA:Optional[int]=None
 
-
-
 class ordenParams(BaseModel):
 
     idEquipoInstalado: Optional[int] = None

@@ -1,8 +1,65 @@
 from fastapi import HTTPException
-from src.db.database import get_pool
-#from src.models.users import UserRequest 
+from src.db.database import get_pool,build_dynamic_query
+from src.services.auth_service import generate_JWT, decode_JWT  
 
 
+
+async def search(params: dict, limit: int = 10, offset: int = 0):
+    pool = await get_pool()
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB no inicializada")
+
+    # 1. Definir columnas permitidas
+    WHITELIST = [  "nombre" ,  "apellido" , 
+                  "username" , "email" ,
+                  "idArea" , "activo" ,
+                  "idRol" , "isDeleted" ]
+    
+
+    # 2. Construir WHERE dinámico
+    where_str, values = build_dynamic_query(params, WHITELIST)
+
+    # 3. Construir query final con paginación
+    # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
+    sql = f"""
+        SELECT * FROM public."Usuario"
+        {where_str}
+        ORDER BY "idUsuario"  -- Recomendado para que la paginación sea consistente
+        LIMIT ${len(values) + 1} OFFSET ${len(values) + 2}
+    """
+    
+    # Añadimos los valores de paginación a la lista de argumentos
+    full_values = [*values, limit, offset]
+
+    rows = await pool.fetch(sql, *full_values)
+    
+    if not rows:
+        # Nota: Es mejor devolver lista vacía [] que un 404 en búsquedas, 
+        # pero mantengo tu lógica si así lo prefieres.
+        raise HTTPException(status_code=404, detail= "Usuario no encontrado")
+
+    return [dict(row) for row in rows]
+#=======================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#==================================================================================================00
 async def user_exists(user):
     pool = await get_pool()
 
