@@ -20,3 +20,8 @@ class EquipoUpdate (BaseModel):
     idFuncion:Optional[int]=Field(default=None)
     idRiesgo:Optional[int]=Field(default=None)
     idReqMto:Optional[int]=Field(default=None)
+
+class EquipoParams(BaseModel):
+    nombre: Optional[str] = None
+    marca: Optional[str] = None
+    modelo: Optional[str] = None
