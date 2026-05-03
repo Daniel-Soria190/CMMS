@@ -17,6 +17,13 @@ class inventarioRequest (BaseModel):
 class MattoUpdate (BaseModel):
     pass
 
-class MattoParams(BaseModel):
-    pass
+class InventarioParams(BaseModel):
+    idEquipo:Optional[int]=None
+    numeroSerie:Optional[str]=None
+    estado:Optional[str]=None
+    fechaIngreso:Optional[date]=None
+    idArea:Optional[int]=None
+    garantia:Optional[bool]=None
+    expiracionGarantia:Optional[date]=None
+
 
