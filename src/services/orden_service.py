@@ -152,7 +152,7 @@ async def id_exist(id):
 
 #======================================================================================================0
 
-async def update(id, Orden):
+async def update(id, data:dict):
     pool= await get_pool()
 
     if pool is None:
@@ -160,12 +160,12 @@ async def update(id, Orden):
 
     if await id_exist(id): #devuelve vacion o bien se puede agregar un error 404
 
-        aux= Orden.dict()
+       # aux= Orden.dict()
 
-        data = {
-            k: v for k, v in aux.items()
-            if v not in ("string", "", None, 0)
-        }
+      #  data = {
+      #      k: v for k, v in aux.items()
+        #    if v not in ("string", "", None, 0)
+       # }
         
         if not data:
             raise HTTPException(status_code=400, detail="Nada para actualizar")

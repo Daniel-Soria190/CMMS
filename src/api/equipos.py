@@ -37,8 +37,10 @@ async def obtener_equipo (idEquipo:int):
     return await get_Equipo(idEquipo)
 
 @router.patch ("/{idEquipo}")
-async def update_equipo(id:int ,equipo:EquipoUpdate):
-    return await update(id,equipo)
+async def update_equipo(id:int ,
+                        filter:EquipoUpdate=Depends()):
+    data= filter.model_dump(exclude_none=True)
+    return await update(id,data)
 
 
 @router.post("/")

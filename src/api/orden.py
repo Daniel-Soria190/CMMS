@@ -43,8 +43,10 @@ async def obtener_orden (idOrden:int):
 
 
 @router.patch ("/{idOrden}")
-async def update_orden(id:int ,orden:ordenUpdate):
-    return await update(id,orden)
+async def update_orden(id:int ,
+                        filter:ordenUpdate=Depends()):
+    data= filter.model_dump(exclude_none=True)
+    return await update(id,data)
 
 
 @router.post("/")
