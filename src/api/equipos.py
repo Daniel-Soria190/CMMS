@@ -31,6 +31,7 @@ async def buscar_equipo(
     
     return await search(query_data, limit, offset)
 
+
 @router.get("/{idEquipo}")
 async def obtener_equipo (idEquipo:int):
     return await get_Equipo(idEquipo)
