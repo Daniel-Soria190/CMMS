@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, Depends
 from fastapi import HTTPException 
 from fastapi.responses import Response
 from src.models.mantenimiento import ManttoRequest,MattoParams
-from src.services.mantenimiento_service import set_mantto,search
+from src.services.mantenimiento_service import set_mantto,search,get_Mtto
 from src.models.auth import TokenResponse
 from typing import Optional
 from datetime import datetime
@@ -37,8 +37,10 @@ async def buscar_mantenimiento (
 
     return await search(query_data,limit, offset)
 
-
+@router.get("/{idMantenimiento}")
+async def obtener_Mantenimiento(idMantenimiento:int):
+    return await get_Mtto(idMantenimiento)
 
 @router.post("/")
-async def mantto( mantto:ManttoRequest):
+async def mantenimiento( mantto:ManttoRequest):
     return await set_mantto(mantto)

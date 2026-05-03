@@ -15,11 +15,10 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
                   "realizadoPor" , "verificadoPor" ,
                   "externo" , "realizadoPorExterno" ]
     
-    print(params)
+
     # 2. Construir WHERE dinámico
     where_str, values = build_dynamic_query(params, WHITELIST)
-    print (where_str)
-    print(values)
+
     # 3. Construir query final con paginación
     # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
     sql = f"""
@@ -65,6 +64,26 @@ async def mantto_exists(mantto):
 
         return row is not None 
     
+
+async def get_Mtto(idMantenimiento):
+    pool = await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."Mantenimiento"
+            WHERE "idMantenimiento" =$1;
+            """,
+            idMantenimiento,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
+
+        return dict(row)
+
 
 async def set_mantto(mantto):
     pool = await get_pool()
