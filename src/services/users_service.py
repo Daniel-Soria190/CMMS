@@ -57,12 +57,43 @@ async def get_user(idUser):
             idUser,     
         )
         if row == None:
-            raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
         return dict(row)
 #=================================================================================================
 
 
+async def update(id, data:dict):
+    pool= await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+
+    if await get_user(id): #devuelve vacio o bien se puede agregar un error 404
+
+       
+
+       # data = {
+       #     k: v for k, v in aux.items()
+       #     if v not in ("string", "", None, 0)
+       # }
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Nada para actualizar")
+        
+        update_data = ", ".join(
+        [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
+        )
+        query = f'UPDATE public."Usuario" SET {update_data} WHERE "idUsuario" = ${len(data)+1}'
+
+        values = list(data.values())
+        values.append(id)
+
+        async with pool.acquire() as conn:
+                await conn.execute(
+                query,*values
+                )
+                return {"staus": "Usuario actualizado con exito"}
 
 
 #==================================================================================================00

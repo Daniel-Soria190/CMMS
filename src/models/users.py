@@ -12,8 +12,8 @@ class UserRequest(BaseModel):
     idRol:int
 
 class userUpdate(BaseModel):
-    name: Optional[str] = None
-    lastname: Optional[str] = None
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
     username:Optional[str]=None
     email:Optional[str]=None
     password_hash:Optional[str]=None
