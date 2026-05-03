@@ -2,7 +2,7 @@ from fastapi import APIRouter,Query,Depends
 from fastapi import HTTPException
 from fastapi.responses import Response
 from src.models.inventario import inventarioRequest
-from src.services.inventario_service import set_inventario#,search,get_inventario,update
+from src.services.inventario_service import set_inventario,get_invent#,search,get_inventario,update
 
 router = APIRouter(prefix="/inventario", tags=["inventario"])
 
@@ -21,9 +21,9 @@ router = APIRouter(prefix="/inventario", tags=["inventario"])
 #    return await search(query_data,limit, offset)
 #=========================================================================================
 
-#@router.get("/{idUser}")
-#async def obtener_user (idUser:int):
-#    return await get_user(idUser)
+@router.get("/{idInventario}")
+async def obtener_inventario (idInventario:int):
+    return await get_invent(idInventario)
 
 #=================================================================================
 

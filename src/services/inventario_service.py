@@ -1,6 +1,30 @@
 from fastapi import HTTPException
 from src.db.database import get_pool, build_dynamic_query
 from src.services.auth_service import generate_JWT, decode_JWT   
+
+
+#=======================================================================
+
+
+async def get_invent(idInventario):
+    pool = await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."EquipoInstalado"
+            WHERE "idEquipoInstalado" =$1;
+            """,
+            idInventario,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
+
+        return dict(row)
+
 #========================================================================
 
 

@@ -7,7 +7,7 @@ from typing import Optional
 class inventarioRequest (BaseModel):
     idEquipo:int
     numeroSerie:str
-    estado:str
+    estado:str =Field (default="Activo")
     fechaIngreso:date
     idArea:int
     garantia:bool
