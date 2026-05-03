@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Query, Depends
 from fastapi import HTTPException 
 from fastapi.responses import Response
-from src.models.orden import ordenRequest,ordenParams
-from src.services.orden_service import set_orden,search,get_orden
+from src.models.orden import ordenRequest,ordenParams,ordenUpdate
+from src.services.orden_service import set_orden,search,get_orden,update
 from src.models.auth import TokenResponse
 
 
@@ -40,6 +40,11 @@ async def buscar_orden(
 @router.get("/{idOrden}")
 async def obtener_orden (idOrden:int):
     return await get_orden(idOrden)
+
+
+@router.patch ("/{idOrden}")
+async def update_orden(id:int ,orden:ordenUpdate):
+    return await update(id,orden)
 
 
 @router.post("/")

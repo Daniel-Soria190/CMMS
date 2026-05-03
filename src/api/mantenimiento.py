@@ -37,13 +37,16 @@ async def buscar_mantenimiento (
 
     return await search(query_data,limit, offset)
 
+
 @router.get("/{idMantenimiento}")
 async def obtener_mantenimiento(idMantenimiento:int):
     return await get_Mtto(idMantenimiento)
 
+
 @router.patch ("/{idMantenimiento}")
 async def update_matto(id:int ,Matto:MattoUpdate):
     return await update(id,Matto)
+
 
 @router.post("/")
 async def mantenimiento( mantto:MattoRequest):

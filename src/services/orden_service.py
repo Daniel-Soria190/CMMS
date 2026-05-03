@@ -134,12 +134,55 @@ async def get_orden(idOrden):
 
 #=======================================================================================================0
 
+async def id_exist(id):
+    pool = await get_pool()
 
+   # if pool is None:
+    #    raise HTTPException(status_code=500, detail="DB no inicializada")   
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT 1 FROM public."OrdenTrabajo"
+            WHERE "idOrden"=$1;
+            """,
+            id   
+        )
+
+        return row is not None 
 
 #======================================================================================================0
 
+async def update(id, Orden):
+    pool= await get_pool()
 
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
 
+    if await id_exist(id): #devuelve vacion o bien se puede agregar un error 404
+
+        aux= Orden.dict()
+
+        data = {
+            k: v for k, v in aux.items()
+            if v not in ("string", "", None, 0)
+        }
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Nada para actualizar")
+        
+        update_data = ", ".join(
+        [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
+        )
+        query = f'UPDATE public."OrdenTrabajo" SET {update_data} WHERE "idOrden" = ${len(data)+1}'
+
+        values = list(data.values())
+        values.append(id)
+
+        async with pool.acquire() as conn:
+                await conn.execute(
+                query,*values
+                )
+                return {"staus": "Orden de trabajo actualizada con exito"}
 
 #========================================================================================================
 async def set_orden(orden):
