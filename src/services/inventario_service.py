@@ -2,6 +2,39 @@ from fastapi import HTTPException
 from src.db.database import get_pool, build_dynamic_query
 from src.services.auth_service import generate_JWT, decode_JWT   
 
+#========================================================================
+
+async def update(id, data):
+    pool= await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+
+    if await get_invent(id): #devuelve vacio o bien se puede agregar un error 404
+
+        #aux= Matto.dict()
+
+        #data = {
+        #    k: v for k, v in aux.items()
+        #    if v not in ("string", "", None, 0)
+        #}
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Nada para actualizar")
+        
+        update_data = ", ".join(
+        [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
+        )
+        query = f'UPDATE public."EquipoInstalado" SET {update_data} WHERE "idEquipoInstalado" = ${len(data)+1}'
+
+        values = list(data.values())
+        values.append(id)
+
+        async with pool.acquire() as conn:
+                await conn.execute(
+                query,*values
+                )
+                return {"staus": "Equipo actualizado con exito"}
 
 #========================================================================
 

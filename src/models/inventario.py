@@ -14,8 +14,15 @@ class inventarioRequest (BaseModel):
     expiracionGarantia:date
     idAdquisicion:int
 
-class MattoUpdate (BaseModel):
-    pass
+class InventarioUpdate (BaseModel):
+    idEquipo:Optional[int]=None
+    numeroSerie:Optional[str]=None
+    estado:Optional[str]=None
+    idArea:Optional[int]=None
+    garantia:Optional[bool]=None
+    expiracionGarantia:Optional[date]=None  
+    idAdquisicion:Optional[int]=None
+    isDelete:Optional[bool]=None
 
 class InventarioParams(BaseModel):
     idEquipo:Optional[int]=None

@@ -1,8 +1,8 @@
 from fastapi import APIRouter,Query,Depends
 from fastapi import HTTPException
 from fastapi.responses import Response
-from src.models.inventario import inventarioRequest,InventarioParams
-from src.services.inventario_service import set_inventario,get_invent,search#,get_inventario,update
+from src.models.inventario import inventarioRequest,InventarioParams,InventarioUpdate
+from src.services.inventario_service import set_inventario,get_invent,search,update
 
 router = APIRouter(prefix="/inventario", tags=["inventario"])
 
@@ -27,11 +27,11 @@ async def obtener_inventario (idInventario:int):
 
 #=================================================================================
 
-#@router.patch ("/{idUser}")
-#async def update_user(id:int ,
-#                      filter:userUpdate=Depends()):
-#    query_data= filter.model_dump(exclude_none=True)
-#    return await update(id,query_data)
+@router.patch ("/{idInventario}")
+async def update_inventario(id:int ,
+                      filter:InventarioUpdate=Depends()):
+    query_data= filter.model_dump(exclude_none=True)
+    return await update(id,query_data)
 
 #=========================================================================
 
