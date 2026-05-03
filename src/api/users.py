@@ -19,7 +19,6 @@ async def buscar_user (
     query_data = filters.model_dump(exclude_none=True)
 
     return await search(query_data,limit, offset)
-
 #=========================================================================================
 
 @router.get("/{idUser}")
@@ -28,13 +27,11 @@ async def obtener_user (idUser:int):
 
 #=================================================================================
 
-
 @router.patch ("/{idUser}")
 async def update_user(id:int ,
                       filter:userUpdate=Depends()):
     query_data= filter.model_dump(exclude_none=True)
     return await update(id,query_data)
-
 
 #=========================================================================
 

@@ -10,8 +10,10 @@ from src.api.websockets import router as ws_router
 from src.api.ordenes import router as ordenes_router
 
 
+from src.api.inventario import router as invent_router
 from src.api.mantenimiento import router as mantto_router
 from src.api.orden import router as orden_router
+
 # Inicialización de la API y Pool SQL
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +40,7 @@ app.include_router(equipos_router)
 app.include_router(ge_router)
 app.include_router(ordenes_router)
 app.include_router(mantto_router)
+app.include_router(invent_router)
 app.include_router(orden_router)
 
 
