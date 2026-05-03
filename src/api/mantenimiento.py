@@ -44,8 +44,10 @@ async def obtener_mantenimiento(idMantenimiento:int):
 
 
 @router.patch ("/{idMantenimiento}")
-async def update_matto(id:int ,Matto:MattoUpdate):
-    return await update(id,Matto)
+async def update_matto(id:int ,
+                       filter:MattoUpdate=Depends()):
+    data=filter.model_dump(exclude_none=True)
+    return await update(id,data)
 
 
 @router.post("/")

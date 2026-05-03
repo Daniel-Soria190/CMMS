@@ -40,6 +40,7 @@ async def obtener_equipo (idEquipo:int):
 async def update_equipo(id:int ,
                         filter:EquipoUpdate=Depends()):
     data= filter.model_dump(exclude_none=True)
+    
     return await update(id,data)
 
 

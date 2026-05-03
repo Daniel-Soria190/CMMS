@@ -103,7 +103,7 @@ async def get_Mtto(idMantenimiento):
 #================================================================================================00
 
 
-async def update(id, Matto):
+async def update(id, data):
     pool= await get_pool()
 
     if pool is None:
@@ -111,12 +111,12 @@ async def update(id, Matto):
 
     if await id_exist(id): #devuelve vacio o bien se puede agregar un error 404
 
-        aux= Matto.dict()
+        #aux= Matto.dict()
 
-        data = {
-            k: v for k, v in aux.items()
-            if v not in ("string", "", None, 0)
-        }
+        #data = {
+        #    k: v for k, v in aux.items()
+        #    if v not in ("string", "", None, 0)
+        #}
         
         if not data:
             raise HTTPException(status_code=400, detail="Nada para actualizar")
