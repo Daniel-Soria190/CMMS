@@ -28,10 +28,10 @@ async def obtener_user (idUser:int):
 #=================================================================================
 
 @router.patch ("/{idUser}")
-async def update_user(id:int ,
+async def update_user(idUser:int ,
                       filter:userUpdate=Depends()):
     query_data= filter.model_dump(exclude_none=True)
-    return await update(id,query_data)
+    return await update(idUser,query_data)
 
 #=========================================================================
 
