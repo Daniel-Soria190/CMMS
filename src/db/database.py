@@ -66,6 +66,8 @@ async def get_pool():
 from datetime import datetime, date
 from typing import Any
 
+
+
 def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
     conditions = []
     values = []
@@ -114,6 +116,10 @@ def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
 
     return where_clause, values
 
+
+
+
+#==============================================================================
 #def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
 #    conditions = []
 #    values = []

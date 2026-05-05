@@ -1,76 +1,190 @@
 from fastapi import HTTPException
-from src.db.database import get_pool
+from src.db.database import get_pool,build_dynamic_query
 from src.services.auth_service import generate_JWT, decode_JWT   
 from datetime import datetime, timezone
 
-async def search (idOrden,idEquipoInstall,
-                  prioridad,estado,
-                  fechaSoli,fechaEnt,
-                  asignadoa,creadopor):
+#async def search (idOrden,idEquipoInstall,
+#                  prioridad,estado,
+#                  fechaSoli,fechaEnt,
+#                  asignadoa,creadopor):
+#    pool = await get_pool()
+#    if pool is None:
+#        raise HTTPException(status_code=500, detail="DB no inicializada") 
+#
+#    base_query = 'SELECT * FROM public."OrdenTrabajo"'
+#    and_conditions = []
+#    or_conditions = []
+#   values = []
+#
+#    # AND (filtros)
+#    if idOrden is not None:
+#        and_conditions.append(f""" "idOrden" = ${len(values)+1}""")
+#       values.append(idOrden)
+#
+#
+#   if estado is not None:
+#        and_conditions.append(f""" "estado" = ${len(values)+1}""")
+#        values.append(estado)
+#
+#    if fechaSoli is not None:
+#        and_conditions.append(f""" "fechaSolicitud" = ${len(values)+1}""")
+#        values.append(fechaSoli)
+#
+#    if fechaEnt is not None:
+#       and_conditions.append(f""" "fechaEntrega"= ${len(values)+1}""")
+#        values.append(fechaEnt)
+#
+#    # OR (filtros alternativos)
+#    if prioridad is not None:
+#        or_conditions.append(f""" "prioridad" = ${len(values)+1}""")
+#        values.append(prioridad)
+#
+#    if idEquipoInstall is not None:
+#        or_conditions.append(f""" "idEquipoInstalado" = ${len(values)+1}""")
+#        values.append(idEquipoInstall)
+#
+#    if asignadoa is not None:
+#        or_conditions.append(f""" "asignadoA" = ${len(values)+1}""")
+#        values.append(asignadoa)
+#
+#    if creadopor is not None:
+#        or_conditions.append(f""" "creadoPorUsuario" = ${len(values)+1}""")
+#        values.append(creadopor)
+#
+#    # Construir WHERE
+#    if and_conditions or or_conditions:
+#        base_query += " WHERE "
+#
+#        if and_conditions:
+#           base_query += " AND ".join(and_conditions)
+#
+#        if or_conditions:
+#            if and_conditions:
+#                base_query += " AND "
+#            base_query += "(" + " OR ".join(or_conditions) + ")"
+#
+#    rows = await pool.fetch(base_query, *values)
+#
+#    aux= [dict(row) for row in rows]
+#
+#    if aux:
+#        return aux
+#    else:
+#        return HTTPException(status_code=404, detail="orden no encontrada") 
+#=======================================================================================================
+
+
+async def search(params: dict, limit: int = 10, offset: int = 0):
     pool = await get_pool()
     if pool is None:
-        raise HTTPException(status_code=500, detail="DB no inicializada") 
+        raise HTTPException(status_code=500, detail="DB no inicializada")
 
-    base_query = 'SELECT * FROM public."OrdenTrabajo"'
-    and_conditions = []
-    or_conditions = []
-    values = []
+    # 1. Definir columnas permitidas
+    WHITELIST = [ "idEquipoInstalado" ,"prioridad" ,
+                 "estado" ,"fechaSolicitud" , 
+                 "FechaEntrega" ,"asignadoA" , 
+                 "creadoPorUsuario" ]
+    
+    print(params)
+    # 2. Construir WHERE dinámico
+    where_str, values = build_dynamic_query(params, WHITELIST)
+    print(where_str)
+    print(values)
+    # 3. Construir query final con paginación
+    # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
+    sql = f"""
+        SELECT * FROM public."OrdenTrabajo"
+        {where_str}
+        ORDER BY "idOrden"  -- Recomendado para que la paginación sea consistente
+        LIMIT ${len(values) + 1} OFFSET ${len(values) + 2}
+    """
+    
+    # Añadimos los valores de paginación a la lista de argumentos
+    full_values = [*values, limit, offset]
 
-    # AND (filtros)
-    if idOrden is not None:
-        and_conditions.append(f""" "idOrden" = ${len(values)+1}""")
-        values.append(idOrden)
+    rows = await pool.fetch(sql, *full_values)
+    
+    if not rows:
+        # Nota: Es mejor devolver lista vacía [] que un 404 en búsquedas, 
+        # pero mantengo tu lógica si así lo prefieres.
+        raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
 
-    if estado is not None:
-        and_conditions.append(f""" "estado" = ${len(values)+1}""")
-        values.append(estado)
+    return [dict(row) for row in rows]
 
-    if fechaSoli is not None:
-        and_conditions.append(f""" "fechaSolicitud" = ${len(values)+1}""")
-        values.append(fechaSoli)
+#======================================================================================================
 
-    if fechaEnt is not None:
-        and_conditions.append(f""" "fechaEntrega"= ${len(values)+1}""")
-        values.append(fechaEnt)
+async def get_orden(idOrden):
+    pool = await get_pool()
 
-    # OR (filtros alternativos)
-    if prioridad is not None:
-        or_conditions.append(f""" "prioridad" = ${len(values)+1}""")
-        values.append(prioridad)
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."OrdenTrabajo"
+            WHERE "idOrden" =$1;
+            """,
+            idOrden,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Orden no encontrada")
 
-    if idEquipoInstall is not None:
-        or_conditions.append(f""" "idEquipoInstalado" = ${len(values)+1}""")
-        values.append(idEquipoInstall)
+        return dict(row)
 
-    if asignadoa is not None:
-        or_conditions.append(f""" "asignadoA" = ${len(values)+1}""")
-        values.append(asignadoa)
+#=======================================================================================================0
 
-    if creadopor is not None:
-        or_conditions.append(f""" "creadoPorUsuario" = ${len(values)+1}""")
-        values.append(creadopor)
+async def id_exist(id):
+    pool = await get_pool()
 
-    # Construir WHERE
-    if and_conditions or or_conditions:
-        base_query += " WHERE "
+   # if pool is None:
+    #    raise HTTPException(status_code=500, detail="DB no inicializada")   
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT 1 FROM public."OrdenTrabajo"
+            WHERE "idOrden"=$1;
+            """,
+            id   
+        )
 
-        if and_conditions:
-            base_query += " AND ".join(and_conditions)
+        return row is not None 
 
-        if or_conditions:
-            if and_conditions:
-                base_query += " AND "
-            base_query += "(" + " OR ".join(or_conditions) + ")"
+#======================================================================================================0
 
-    rows = await pool.fetch(base_query, *values)
+async def update(id, data:dict):
+    pool= await get_pool()
 
-    aux= [dict(row) for row in rows]
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
 
-    if aux:
-        return aux
-    else:
-        return HTTPException(status_code=404, detail="orden no encontrada") 
+    if await id_exist(id): #devuelve vacion o bien se puede agregar un error 404
 
+       # aux= Orden.dict()
+
+      #  data = {
+      #      k: v for k, v in aux.items()
+        #    if v not in ("string", "", None, 0)
+       # }
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Nada para actualizar")
+        
+        update_data = ", ".join(
+        [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
+        )
+        query = f'UPDATE public."OrdenTrabajo" SET {update_data} WHERE "idOrden" = ${len(data)+1}'
+
+        values = list(data.values())
+        values.append(id)
+
+        async with pool.acquire() as conn:
+                await conn.execute(
+                query,*values
+                )
+                return {"staus": "Orden de trabajo actualizada con exito"}
+
+#========================================================================================================
 async def set_orden(orden):
     pool = await get_pool()
 

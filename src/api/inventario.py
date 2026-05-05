@@ -1,14 +1,14 @@
 from fastapi import APIRouter,Query,Depends
 from fastapi import HTTPException
 from fastapi.responses import Response
-from src.models.users import UserRequest,userParams,userUpdate
-from src.services.users_service import set_user,search,get_user,update
+from src.models.inventario import inventarioRequest,InventarioParams,InventarioUpdate
+from src.services.inventario_service import set_inventario,get_invent,search,update
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/inventario", tags=["inventario"])
 
 @router.get ( "/")
-async def buscar_user (
-    filters: userParams = Depends(), 
+async def buscar_inventario (
+    filters: InventarioParams = Depends(), 
     limit: int = Query(10, ge=1, le=50), # Validamos min 1, max 50
     page: int = Query(1, ge=1)           # Página actual
 ):
@@ -21,20 +21,20 @@ async def buscar_user (
     return await search(query_data,limit, offset)
 #=========================================================================================
 
-@router.get("/{idUser}")
-async def obtener_user (idUser:int):
-    return await get_user(idUser)
+@router.get("/{idInventario}")
+async def obtener_inventario (idInventario:int):
+    return await get_invent(idInventario)
 
 #=================================================================================
 
-@router.patch ("/{idUser}")
-async def update_user(idUser:int ,
-                      filter:userUpdate=Depends()):
+@router.patch ("/{idInventario}")
+async def update_inventario(idInventario:int ,
+                      filter:InventarioUpdate=Depends()):
     query_data= filter.model_dump(exclude_none=True)
-    return await update(idUser,query_data)
+    return await update(idInventario ,query_data)
 
 #=========================================================================
 
 @router.post ("/")
-async def user(user: UserRequest):
-    return await set_user(user)
+async def inventario(invent: inventarioRequest):
+    return await set_inventario(invent)

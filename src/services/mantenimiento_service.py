@@ -15,11 +15,10 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
                   "realizadoPor" , "verificadoPor" ,
                   "externo" , "realizadoPorExterno" ]
     
-    print(params)
+
     # 2. Construir WHERE dinámico
     where_str, values = build_dynamic_query(params, WHITELIST)
-    print (where_str)
-    print(values)
+
     # 3. Construir query final con paginación
     # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
     sql = f"""
@@ -37,12 +36,12 @@ async def search(params: dict, limit: int = 10, offset: int = 0):
     if not rows:
         # Nota: Es mejor devolver lista vacía [] que un 404 en búsquedas, 
         # pero mantengo tu lógica si así lo prefieres.
-        raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
+        raise HTTPException(status_code=404, detail= "Mantenimiento no encontrado")
 
     return [dict(row) for row in rows]
 
 
-
+#==============================================================================================0
 
 #Revisar si es necesario identificar si ya existe un mantenimiento por medio 
 #del idOrden, sino se puede simplemente quitar la funcion.
@@ -64,8 +63,80 @@ async def mantto_exists(mantto):
         #print(row is not None )
 
         return row is not None 
-    
+#====================================================================================00
+   
+async def id_exist(id):
+    pool = await get_pool()
 
+   # if pool is None:
+    #    raise HTTPException(status_code=500, detail="DB no inicializada")   
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT 1 FROM public."Mantenimiento"
+            WHERE "idMantenimiento"=$1;
+            """,
+            id   
+        )
+
+        return row is not None 
+    
+#==========================================================================================0
+async def get_Mtto(idMantenimiento):
+    pool = await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+           """
+            SELECT * FROM public."Mantenimiento"
+            WHERE "idMantenimiento" =$1;
+            """,
+            idMantenimiento,     
+        )
+        if row == None:
+            raise HTTPException(status_code=404, detail="Mantenimiento no encontrado")
+
+        return dict(row)
+#================================================================================================00
+
+
+async def update(id, data):
+    pool= await get_pool()
+
+    if pool is None:
+       raise HTTPException(status_code=500, detail="DB no inicializada") 
+
+    if await id_exist(id): #devuelve vacio o bien se puede agregar un error 404
+
+        #aux= Matto.dict()
+
+        #data = {
+        #    k: v for k, v in aux.items()
+        #    if v not in ("string", "", None, 0)
+        #}
+        
+        if not data:
+            raise HTTPException(status_code=400, detail="Nada para actualizar")
+        
+        update_data = ", ".join(
+        [f'"{k}" = ${i+1}' for i, k in enumerate(data.keys())]
+        )
+        query = f'UPDATE public."Mantenimiento" SET {update_data} WHERE "idMantenimiento" = ${len(data)+1}'
+
+        values = list(data.values())
+        values.append(id)
+
+        async with pool.acquire() as conn:
+                await conn.execute(
+                query,*values
+                )
+                return {"staus": "Mantenimiento actualizado con exito"}
+
+
+#======================================================================================0
 async def set_mantto(mantto):
     pool = await get_pool()
 

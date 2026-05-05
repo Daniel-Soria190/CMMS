@@ -4,13 +4,23 @@ from typing import Optional
 
 
 
-class ManttoRequest (BaseModel):
+class MattoRequest (BaseModel):
     idOrden:int 
     tipo:str
     rPor:int
     externo:bool
     descripcion:str
     rPorExt:int
+
+
+class MattoUpdate (BaseModel):
+    tipo: Optional[str]=None
+    fechaFin: Optional[datetime]=None
+    realizadoPor: Optional[int]=None
+    verificadoPor: Optional[int]=None
+    descripcionTrabajo: Optional [str]=None
+    realizadoPorExterno: Optional[int]=None
+
 
 class MattoParams(BaseModel):
     idOrden: Optional[int]= None

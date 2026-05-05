@@ -15,4 +15,19 @@ class ordenRequest(BaseModel):
     creadopor:int
     creadoporext:int
 
+class ordenUpdate(BaseModel):
+    descripcionFallo: Optional[str] = None
+    prioridad: Optional[str] = None
+    estado:Optional[str]=None
+    fechaEntrega:Optional[datetime]=None
+    asignadoA:Optional[int]=None
 
+class ordenParams(BaseModel):
+
+    idEquipoInstalado: Optional[int] = None
+    prioridad: Optional[str] = None
+    estado:Optional[str]=None
+    fechaSolicitud:Optional[datetime]=None
+    fechaEntrega:Optional[datetime]=None
+    asignadoA:Optional[int]=None
+    creadoPorUsuario:Optional[int]=None
