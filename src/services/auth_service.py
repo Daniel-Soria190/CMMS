@@ -93,7 +93,13 @@ async def get_current_user(
 def require_role(id_rol_minimo: int):
     """
     id_rol_minimo: el idRol máximo permitido (inclusive).
-    Ej: require_role(3) permite Administrador(1), Encargado(2) e Ingeniero(3).
+    1: "Administrador",
+    2: "Encargado de Area",
+    3: "Ingeniero",
+    4: "Técnico",
+    5: "Becario",
+    6: "Invitado",
+    7: "Alex"
     """
     async def dependency(
         current_user: dict = Depends(get_current_user),
