@@ -28,10 +28,10 @@ async def obtener_inventario (idInventario:int):
 #=================================================================================
 
 @router.patch ("/{idInventario}")
-async def update_inventario(id:int ,
+async def update_inventario(idInventario:int ,
                       filter:InventarioUpdate=Depends()):
     query_data= filter.model_dump(exclude_none=True)
-    return await update(id,query_data)
+    return await update(idInventario ,query_data)
 
 #=========================================================================
 
