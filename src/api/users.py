@@ -25,19 +25,22 @@ async def buscar_user (
 #=========================================================================================
 
 @router.get("/{idUser}")
-async def obtener_user (idUser:int):
+async def obtener_user (idUser:int,
+        current_user: dict = Depends(require_role(1))):
     return await get_user(idUser)
 
 #=================================================================================
 
 @router.patch ("/{idUser}")
 async def update_user(idUser:int ,
-                      filter:userUpdate=Depends()):
+        filter:userUpdate=Depends(),
+        current_user: dict = Depends(require_role(1))):
     query_data= filter.model_dump(exclude_none=True)
     return await update(idUser,query_data)
 
 #=========================================================================
 
 @router.post ("/")
-async def user(user: UserRequest):
+async def user(user: UserRequest,
+        current_user: dict = Depends(require_role(1))):
     return await set_user(user)
