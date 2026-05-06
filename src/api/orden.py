@@ -4,6 +4,7 @@ from fastapi.responses import Response
 from src.models.orden import ordenRequest,ordenParams,ordenUpdate
 from src.services.orden_service import set_orden,search,get_orden,update
 from src.models.auth import TokenResponse
+from src.services.auth_service import require_role
 
 
 
@@ -26,7 +27,8 @@ router = APIRouter(prefix="/orden", tags=["orden"])
 async def buscar_orden(
     filters: ordenParams = Depends(),
     limit: int = Query(10, ge=1, le=50), # Validamos min 1, max 50
-    page: int = Query(1, ge=1)           # Página actual
+    page: int = Query(1, ge=1),           # Página actual
+    current_user: dict = Depends(require_role(4))
 ):
     # Calculamos el offset (ej: página 1 -> offset 0, página 2 -> offset 10)
     offset = (page - 1) * limit
@@ -38,17 +40,22 @@ async def buscar_orden(
 
 
 @router.get("/{idOrden}")
-async def obtener_orden (idOrden:int):
+async def obtener_orden (idOrden:int,
+        current_user: dict = Depends(require_role(4))
+        ):
     return await get_orden(idOrden)
 
 
 @router.patch ("/{idOrden}")
 async def update_orden(idOrden:int ,
-                        filter:ordenUpdate=Depends()):
+        filter:ordenUpdate=Depends(),
+        current_user: dict = Depends(require_role(4))
+        ):
     data= filter.model_dump(exclude_none=True)
     return await update(idOrden,data)
 
 
 @router.post("/")
-async def orden( orden:ordenRequest):
+async def orden( orden:ordenRequest,
+        current_user: dict = Depends(require_role(4))):
     return await set_orden(orden)
