@@ -35,10 +35,14 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
     if user is None:
         await websocket.close(code=4001, reason="Token inválido")
         return
+    
+    if user == "expirado":
+        await websocket.close(code=401, reason="Token expirado")
+        return
 
     # 2. Verificar rol
     ROL_MINIMO = 5  # Becario o superior
-    if user["idRol"] > ROL_MINIMO:
+    if int(user[2]) > ROL_MINIMO:
         await websocket.close(code=4003, reason="Acceso denegado")
         return
 
