@@ -124,3 +124,27 @@ def _nombre_rol(id_rol: int) -> str:
         7: "Alex"
     }
     return nombres.get(id_rol, str(id_rol))
+
+# auth_service.py
+async def get_current_user_ws(token: str) -> dict | None:
+    pool = await get_pool()
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
+        id_usuario: int = payload.get("idUsuario")
+        if id_usuario is None:
+            return None
+    except ExpiredSignatureError:
+        return "expirado"   # distingue expirado de inválido
+    except JWTError:
+        return None
+
+    row = await pool.fetchrow(
+        """
+        SELECT "Usuario"."idRol", "Rol"."nombre" AS rol
+        FROM "Usuario"
+        JOIN "Rol" ON "Rol"."idRol" = "Usuario"."idRol"
+        WHERE "Usuario"."idUsuario" = $1
+        """,
+        id_usuario,
+    )
+    return dict(row) if row else None
