@@ -42,7 +42,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
 
     # 2. Verificar rol
     ROL_MINIMO = 5  # Becario o superior
-    if int(user[2]) > ROL_MINIMO:
+    if int(user["idRol"]) > ROL_MINIMO:
         await websocket.close(code=4003, reason="Acceso denegado")
         return
 

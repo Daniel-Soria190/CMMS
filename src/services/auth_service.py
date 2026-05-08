@@ -38,18 +38,37 @@ def decode_JWT(token:str):
     except JWTError:
         return "Token inválido"
 
-def refresh_JWT():
-    pass
+def refresh_JWT(token):
+    payload = decode_JWT(token)
+    new_token = generate_JWT(payload)
+    return {"token": new_token}
+    
 
 def expires_JWT():
     pass
+
+async def get_idRol(id_usuario):
+    pool = await get_pool()
+
+    row = await pool.fetchrow(
+        """
+        SELECT "Usuario"."idRol", "Rol"."nombre" AS rol
+        FROM "Usuario"
+        JOIN "Rol" ON "Rol"."idRol" = "Usuario"."idRol"
+        WHERE "Usuario"."idUsuario" = $1
+        """,
+        id_usuario,
+    )
+
+    return row
+
 
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ) -> dict:
     token = credentials.credentials
-    pool = await get_pool()
+    # pool = await get_pool()
 
     # 1. Decodificar JWT
     try:
@@ -71,15 +90,7 @@ async def get_current_user(
         )
 
     # 2. Buscar usuario y su rol en la BD
-    row = await pool.fetchrow(
-        """
-        SELECT "Usuario"."idRol", "Rol".Nombre AS rol
-        FROM "Usuario" "Usuario"
-        JOIN "Rol" "Rol" ON "Rol"."idRol" = "Usuario"."idRol"
-        WHERE "Usuario"."idUsuario" = $1
-        """,
-        id_usuario,
-    )
+    row = get_idRol(id_usuario)
 
     if row is None:
         raise HTTPException(
@@ -127,7 +138,6 @@ def _nombre_rol(id_rol: int) -> str:
 
 # auth_service.py
 async def get_current_user_ws(token: str) -> dict | None:
-    pool = await get_pool()
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         id_usuario: int = payload.get("idUsuario")
@@ -138,13 +148,6 @@ async def get_current_user_ws(token: str) -> dict | None:
     except JWTError:
         return None
 
-    row = await pool.fetchrow(
-        """
-        SELECT "Usuario"."idRol", "Rol"."nombre" AS rol
-        FROM "Usuario"
-        JOIN "Rol" ON "Rol"."idRol" = "Usuario"."idRol"
-        WHERE "Usuario"."idUsuario" = $1
-        """,
-        id_usuario,
-    )
+    row = await get_idRol(id_usuario)
+    
     return dict(row) if row else None

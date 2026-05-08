@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from src.db.database import get_pool
-from src.services.auth_service import generate_JWT, decode_JWT
+from src.services.auth_service import generate_JWT, get_idRol
 
 async def user_exists(q):
     pool = await get_pool()
@@ -70,7 +70,9 @@ async def get_user(q):
 
 async def user_login(user):
     if await password_match(user):
+        id_rol = dict(await get_idRol(user.idUsuario))
         payload = {"idUsuario": user.idUsuario}
+        payload.update(id_rol)
         token = generate_JWT(payload)
         # print(token)
         return {"token":token}
