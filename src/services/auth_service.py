@@ -90,7 +90,7 @@ async def get_current_user(
         )
 
     # 2. Buscar usuario y su rol en la BD
-    row = get_idRol(id_usuario)
+    row = await get_idRol(id_usuario)
 
     if row is None:
         raise HTTPException(
