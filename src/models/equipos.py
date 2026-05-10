@@ -25,3 +25,10 @@ class EquipoParams(BaseModel):
     nombre: Optional[str] = None
     marca: Optional[str] = None
     modelo: Optional[str] = None
+
+class EquipoResponse(BaseModel):
+    nombre:str
+    marca:str 
+    modelo:str
+    tiempoVidaEstimado: int|str|None
+    idRiesgo: int|str|None

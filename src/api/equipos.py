@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends
 from fastapi import HTTPException 
 from fastapi.responses import Response
-from src.models.equipos import EquipoRequest,EquipoUpdate, EquipoParams
+from src.models.equipos import EquipoRequest,EquipoUpdate, EquipoParams, EquipoResponse
 from src.services.equipos_service import set_equipo, get_Equipo, search, update
 from src.models.auth import TokenResponse
 from typing import Optional
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/equipos", tags=["equipos"])
 # ):
 #     return await search (nombre,marca,modelo)
 
-@router.get("/")
+@router.get("/", response_model=list[EquipoResponse])
 async def buscar_equipo(
     filters: EquipoParams = Depends(),
     limit: int = Query(10, ge=1, le=50), # Validamos min 1, max 50
