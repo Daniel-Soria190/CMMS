@@ -33,4 +33,10 @@ class InventarioParams(BaseModel):
     garantia:Optional[bool]=None
     expiracionGarantia:Optional[date]=None
 
+class InventarioResponse(BaseModel):
+    idEquipoInstalado:int
+    idEquipo:int
+    numeroSerie:str
+    estado:str 
+    idArea:int
 

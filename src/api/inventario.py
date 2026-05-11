@@ -1,13 +1,13 @@
 from fastapi import APIRouter,Query,Depends
 from fastapi import HTTPException
 from fastapi.responses import Response
-from src.models.inventario import inventarioRequest,InventarioParams,InventarioUpdate
+from src.models.inventario import inventarioRequest,InventarioParams,InventarioUpdate,InventarioResponse
 from src.services.inventario_service import set_inventario,get_invent,search,update
 from src.services.auth_service import require_role
 
 router = APIRouter(prefix="/inventario", tags=["inventario"])
 
-@router.get ( "/")
+@router.get ( "/",response_model=list [InventarioResponse])
 async def buscar_inventario (
     filters: InventarioParams = Depends(), 
     limit: int = Query(10, ge=1, le=50), # Validamos min 1, max 50
