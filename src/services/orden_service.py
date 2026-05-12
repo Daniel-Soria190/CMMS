@@ -2,77 +2,16 @@ from fastapi import HTTPException
 from src.db.database import get_pool,build_dynamic_query
 from src.services.auth_service import generate_JWT, decode_JWT   
 from datetime import datetime, timezone
+from src.services.notificaciones_service import crear_notificacion_y_notificar
 
-#async def search (idOrden,idEquipoInstall,
-#                  prioridad,estado,
-#                  fechaSoli,fechaEnt,
-#                  asignadoa,creadopor):
-#    pool = await get_pool()
-#    if pool is None:
-#        raise HTTPException(status_code=500, detail="DB no inicializada") 
-#
-#    base_query = 'SELECT * FROM public."OrdenTrabajo"'
-#    and_conditions = []
-#    or_conditions = []
-#   values = []
-#
-#    # AND (filtros)
-#    if idOrden is not None:
-#        and_conditions.append(f""" "idOrden" = ${len(values)+1}""")
-#       values.append(idOrden)
-#
-#
-#   if estado is not None:
-#        and_conditions.append(f""" "estado" = ${len(values)+1}""")
-#        values.append(estado)
-#
-#    if fechaSoli is not None:
-#        and_conditions.append(f""" "fechaSolicitud" = ${len(values)+1}""")
-#        values.append(fechaSoli)
-#
-#    if fechaEnt is not None:
-#       and_conditions.append(f""" "fechaEntrega"= ${len(values)+1}""")
-#        values.append(fechaEnt)
-#
-#    # OR (filtros alternativos)
-#    if prioridad is not None:
-#        or_conditions.append(f""" "prioridad" = ${len(values)+1}""")
-#        values.append(prioridad)
-#
-#    if idEquipoInstall is not None:
-#        or_conditions.append(f""" "idEquipoInstalado" = ${len(values)+1}""")
-#        values.append(idEquipoInstall)
-#
-#    if asignadoa is not None:
-#        or_conditions.append(f""" "asignadoA" = ${len(values)+1}""")
-#        values.append(asignadoa)
-#
-#    if creadopor is not None:
-#        or_conditions.append(f""" "creadoPorUsuario" = ${len(values)+1}""")
-#        values.append(creadopor)
-#
-#    # Construir WHERE
-#    if and_conditions or or_conditions:
-#        base_query += " WHERE "
-#
-#        if and_conditions:
-#           base_query += " AND ".join(and_conditions)
-#
-#        if or_conditions:
-#            if and_conditions:
-#                base_query += " AND "
-#            base_query += "(" + " OR ".join(or_conditions) + ")"
-#
-#    rows = await pool.fetch(base_query, *values)
-#
-#    aux= [dict(row) for row in rows]
-#
-#    if aux:
-#        return aux
-#    else:
-#        return HTTPException(status_code=404, detail="orden no encontrada") 
-#=======================================================================================================
+import os
+import uuid
+import aiofiles
+from fastapi import UploadFile
 
+UPLOAD_DIR = "media/ordenes"
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 async def search(params: dict, limit: int = 10, offset: int = 0):
     pool = await get_pool()
@@ -215,3 +154,144 @@ async def set_orden(orden):
             orden.creadoporext
         )
         return {"status": "Orden de mantenimiento generada con exito."}
+    
+# ── Al final del archivo, reemplaza la versión anterior de crear_reporte_orden ──
+
+
+async def crear_reporte_orden(
+    id_equipo_instalado: int,
+    descripcion_fallo: str,
+    prioridad: str,
+    id_usuario: int | None,
+    contacto: dict | None,
+) -> dict:
+    pool = await get_pool()
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB no inicializada")
+
+    if id_usuario is None and contacto is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Debe proporcionar datos de contacto o iniciar sesión.",
+        )
+
+    async with pool.acquire() as conn:
+
+        # ── 1. Resolver origen ────────────────────────────────────────────────
+        id_creado_por_usuario    = None
+        id_creado_por_reportante = None
+
+        if id_usuario is not None:
+            id_creado_por_usuario = id_usuario
+        else:
+            id_creado_por_reportante = await _resolver_reportante(conn, contacto)
+
+        # ── 2. Insertar OrdenTrabajo ──────────────────────────────────────────
+        now = datetime.now(timezone.utc)
+        row = await conn.fetchrow(
+            """
+            INSERT INTO public."OrdenTrabajo"(
+                "idEquipoInstalado",
+                "descripcionFallo",
+                "prioridad",
+                "estado",
+                "fechaSolicitud",
+                "creadoPorUsuario",
+                "creadoPorReportante"
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING "idOrden", "fechaSolicitud"
+            """,
+            id_equipo_instalado,
+            descripcion_fallo.strip(),
+            prioridad,
+            "por_asignar",
+            now,
+            id_creado_por_usuario,
+            id_creado_por_reportante,
+        )
+        id_orden = row["idOrden"]
+        fecha_solicitud = row["fechaSolicitud"]
+
+        # ── 3. Generar y guardar folio ────────────────────────────────────────
+        folio = f"OT-{now.year}-{id_orden:05d}"
+        await conn.execute(
+            'UPDATE public."OrdenTrabajo" SET "folio" = $1 WHERE "idOrden" = $2',
+            folio,
+            id_orden,
+        )
+
+    # ── 4. Notificar admins ───────────────────────────────────────────────────
+    await _notificar_admins_nueva_orden(pool, id_orden, folio, descripcion_fallo, prioridad)
+
+    return {
+        "idOrden":              id_orden,
+        "folio":                folio,
+        "estado":               "por_asignar",
+        "fechaSolicitud":       fecha_solicitud,
+        "idEquipoInstalado":    id_equipo_instalado,
+        "creadoPorUsuario":     id_creado_por_usuario,
+        "creadoPorReportante":  id_creado_por_reportante,
+        "archivosSubidos":      0,
+        "mensaje":              f"Orden {folio} creada correctamente.",
+    }
+
+
+async def _resolver_reportante(conn, contacto: dict) -> int:
+    correo = contacto.get("correo")
+
+    if correo:
+        existente = await conn.fetchval(
+            'SELECT "idReportante" FROM public."Reportante" WHERE "correo" = $1',
+            correo,
+        )
+        if existente:
+            return existente
+
+    row = await conn.fetchrow(
+        """
+        INSERT INTO public."Reportante"("nombre", "telefono", "correo")
+        VALUES ($1, $2, $3)
+        RETURNING "idReportante"
+        """,
+        contacto["nombre"],
+        contacto.get("telefono"),
+        correo,
+    )
+    return row["idReportante"]
+
+
+async def _notificar_admins_nueva_orden(
+    pool, id_orden: int, folio: str, descripcion: str, prioridad: str
+):
+    """
+    Obtiene todos los admins activos y llama al servicio de notificaciones
+    por cada uno. Fallo aquí no revierte la OT.
+    """
+    try:
+        async with pool.acquire() as conn:
+            admins = await conn.fetch(
+                """
+                SELECT "idUsuario" FROM public."Usuario"
+                WHERE "idRol" = 1
+                  AND "activo" = true
+                  AND "isDeleted" = false
+                """,
+            )
+
+        for admin in admins:
+            await crear_notificacion_y_notificar(
+                pool=pool,
+                user_id=admin["idUsuario"],
+                mensaje=f"Nueva orden {folio} — {descripcion[:80]}",
+                tipo="nueva_orden",
+                data_incremental={
+                    "evento":      "nueva_orden",
+                    "folio":       folio,
+                    "idOrden":     id_orden,
+                    "prioridad":   prioridad,
+                    "descripcion": descripcion[:120],
+                },
+            )
+    except Exception as e:
+        print(f"[WARN] Notificación fallida para nueva orden {folio}: {e}")
