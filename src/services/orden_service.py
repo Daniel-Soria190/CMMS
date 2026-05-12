@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from src.db.database import get_pool,build_dynamic_query
 from src.services.auth_service import generate_JWT, decode_JWT   
 from datetime import datetime, timezone
+from src.services.notificaciones_service import crear_notificacion_y_notificar
 
 import os
 import uuid
@@ -154,19 +155,20 @@ async def set_orden(orden):
         )
         return {"status": "Orden de mantenimiento generada con exito."}
     
+# ── Al final del archivo, reemplaza la versión anterior de crear_reporte_orden ──
+
+
 async def crear_reporte_orden(
     id_equipo_instalado: int,
     descripcion_fallo: str,
     prioridad: str,
     id_usuario: int | None,
     contacto: dict | None,
-    fotos: list[UploadFile],
 ) -> dict:
     pool = await get_pool()
     if pool is None:
         raise HTTPException(status_code=500, detail="DB no inicializada")
 
-    # ── 1. Validar que haya exactamente un origen ─────────────────────────────
     if id_usuario is None and contacto is None:
         raise HTTPException(
             status_code=422,
@@ -175,34 +177,16 @@ async def crear_reporte_orden(
 
     async with pool.acquire() as conn:
 
-        # ── 2. Resolver origen: usuario registrado vs contacto externo ────────
-        id_creado_por_usuario = None
-        id_creado_por_externo = None
+        # ── 1. Resolver origen ────────────────────────────────────────────────
+        id_creado_por_usuario    = None
+        id_creado_por_reportante = None
 
         if id_usuario is not None:
-            # Verificar que el usuario existe y está activo
-            existe = await conn.fetchval(
-                """
-                SELECT 1 FROM public."Usuario"
-                WHERE "idUsuario" = $1
-                  AND "activo" = true
-                  AND "isDeleted" = false
-                """,
-                id_usuario,
-            )
-            if not existe:
-                raise HTTPException(
-                    status_code=401,
-                    detail="El usuario del token no existe o está inactivo.",
-                )
             id_creado_por_usuario = id_usuario
-
         else:
-            id_creado_por_externo = await _resolver_contacto_externo(
-                conn, contacto
-            )
+            id_creado_por_reportante = await _resolver_reportante(conn, contacto)
 
-        # ── 3. Insertar OrdenTrabajo ──────────────────────────────────────────
+        # ── 2. Insertar OrdenTrabajo ──────────────────────────────────────────
         now = datetime.now(timezone.utc)
         row = await conn.fetchrow(
             """
@@ -213,7 +197,7 @@ async def crear_reporte_orden(
                 "estado",
                 "fechaSolicitud",
                 "creadoPorUsuario",
-                "creadoPorExterno"
+                "creadoPorReportante"
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING "idOrden", "fechaSolicitud"
@@ -224,12 +208,12 @@ async def crear_reporte_orden(
             "por_asignar",
             now,
             id_creado_por_usuario,
-            id_creado_por_externo,
+            id_creado_por_reportante,
         )
         id_orden = row["idOrden"]
         fecha_solicitud = row["fechaSolicitud"]
 
-        # ── 4. Generar y guardar folio ────────────────────────────────────────
+        # ── 3. Generar y guardar folio ────────────────────────────────────────
         folio = f"OT-{now.year}-{id_orden:05d}"
         await conn.execute(
             'UPDATE public."OrdenTrabajo" SET "folio" = $1 WHERE "idOrden" = $2',
@@ -237,50 +221,28 @@ async def crear_reporte_orden(
             id_orden,
         )
 
-        # ── 5. Guardar fotos si vienen ────────────────────────────────────────
-        archivos_guardados = 0
-        if fotos:
-            archivos_guardados = await _guardar_fotos(
-                conn=conn,
-                fotos=fotos,
-                id_orden=id_orden,
-                id_subido_por=id_creado_por_usuario,
-            )
-
-    # ── 6. Notificar admins por WS (fuera del conn, la pool ya liberó) ────────
-    await _notificar_admins_nueva_orden(
-        pool=pool,
-        id_orden=id_orden,
-        folio=folio,
-        descripcion=descripcion_fallo,
-        prioridad=prioridad,
-    )
+    # ── 4. Notificar admins ───────────────────────────────────────────────────
+    await _notificar_admins_nueva_orden(pool, id_orden, folio, descripcion_fallo, prioridad)
 
     return {
-        "idOrden":           id_orden,
-        "folio":             folio,
-        "estado":            "por_asignar",
-        "fechaSolicitud":    fecha_solicitud,
-        "idEquipoInstalado": id_equipo_instalado,
-        "creadoPorUsuario":  id_creado_por_usuario,
-        "creadoPorExterno":  id_creado_por_externo,
-        "archivosSubidos":   archivos_guardados,
-        "mensaje":           f"Orden {folio} creada correctamente.",
+        "idOrden":              id_orden,
+        "folio":                folio,
+        "estado":               "por_asignar",
+        "fechaSolicitud":       fecha_solicitud,
+        "idEquipoInstalado":    id_equipo_instalado,
+        "creadoPorUsuario":     id_creado_por_usuario,
+        "creadoPorReportante":  id_creado_por_reportante,
+        "archivosSubidos":      0,
+        "mensaje":              f"Orden {folio} creada correctamente.",
     }
 
 
-# ── Helpers privados ──────────────────────────────────────────────────────────
-
-async def _resolver_contacto_externo(conn, contacto: dict) -> int:
-    """
-    Busca ContactoExterno por correo. Si no existe, lo crea.
-    Si no hay correo, siempre crea registro nuevo.
-    """
+async def _resolver_reportante(conn, contacto: dict) -> int:
     correo = contacto.get("correo")
 
     if correo:
         existente = await conn.fetchval(
-            'SELECT "idContactoExterno" FROM public."ContactoExterno" WHERE "correo" = $1',
+            'SELECT "idReportante" FROM public."Reportante" WHERE "correo" = $1',
             correo,
         )
         if existente:
@@ -288,76 +250,25 @@ async def _resolver_contacto_externo(conn, contacto: dict) -> int:
 
     row = await conn.fetchrow(
         """
-        INSERT INTO public."ContactoExterno"("nombre", "telefono", "correo", "empresa")
-        VALUES ($1, $2, $3, $4)
-        RETURNING "idContactoExterno"
+        INSERT INTO public."Reportante"("nombre", "telefono", "correo")
+        VALUES ($1, $2, $3)
+        RETURNING "idReportante"
         """,
         contacto["nombre"],
         contacto.get("telefono"),
         correo,
-        contacto.get("empresa"),
     )
-    return row["idContactoExterno"]
-
-
-async def _guardar_fotos(
-    conn,
-    fotos: list[UploadFile],
-    id_orden: int,
-    id_subido_por: int | None,
-) -> int:
-    """
-    Valida, escribe en disco y registra en tabla Archivo.
-    Archivos inválidos o muy pesados se omiten silenciosamente.
-    """
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    guardados = 0
-
-    for foto in fotos:
-        if foto.content_type not in ALLOWED_MIME:
-            continue
-
-        contenido = await foto.read()
-        if len(contenido) > MAX_FILE_SIZE:
-            continue
-
-        ext = foto.filename.rsplit(".", 1)[-1].lower() if "." in foto.filename else "jpg"
-        nombre_archivo = f"{uuid.uuid4().hex}.{ext}"
-        ruta = f"{UPLOAD_DIR}/{nombre_archivo}"
-
-        async with aiofiles.open(ruta, "wb") as f:
-            await f.write(contenido)
-
-        await conn.execute(
-            """
-            INSERT INTO public."Archivo"(
-                "ruta", "tipo", "mime_type",
-                "idOrden", "subidoPor", "fechaSubida"
-            )
-            VALUES ($1, $2, $3, $4, $5, $6)
-            """,
-            ruta,
-            "evidencia_reporte",
-            foto.content_type,
-            id_orden,
-            id_subido_por,
-            datetime.now(timezone.utc),
-        )
-        guardados += 1
-
-    return guardados
+    return row["idReportante"]
 
 
 async def _notificar_admins_nueva_orden(
     pool, id_orden: int, folio: str, descripcion: str, prioridad: str
 ):
     """
-    Persiste notificación en DB y envía WS a admins conectados.
-    Fallo aquí no revierte la OT — se captura silenciosamente.
+    Obtiene todos los admins activos y llama al servicio de notificaciones
+    por cada uno. Fallo aquí no revierte la OT.
     """
     try:
-        from src.services.websockets_service import manager  # importación local para evitar ciclos
-
         async with pool.acquire() as conn:
             admins = await conn.fetch(
                 """
@@ -368,34 +279,19 @@ async def _notificar_admins_nueva_orden(
                 """,
             )
 
-            for admin in admins:
-                uid = admin["idUsuario"]
-
-                # Persistir en DB
-                await conn.execute(
-                    """
-                    INSERT INTO public."Notificacion"(
-                        "idUsuario", "mensaje", "tipo", "referenciaId", "leida"
-                    )
-                    VALUES ($1, $2, $3, $4, false)
-                    """,
-                    uid,
-                    f"Nueva orden {folio} — {descripcion[:80]}",
-                    "nueva_orden",
-                    id_orden,
-                )
-
-                # Enviar por WS si está conectado
-                await manager.send_personal(
-                    user_id=uid,
-                    data={
-                        "evento":      "nueva_orden",
-                        "folio":       folio,
-                        "idOrden":     id_orden,
-                        "prioridad":   prioridad,
-                        "descripcion": descripcion[:120],
-                    },
-                )
+        for admin in admins:
+            await crear_notificacion_y_notificar(
+                pool=pool,
+                user_id=admin["idUsuario"],
+                mensaje=f"Nueva orden {folio} — {descripcion[:80]}",
+                tipo="nueva_orden",
+                data_incremental={
+                    "evento":      "nueva_orden",
+                    "folio":       folio,
+                    "idOrden":     id_orden,
+                    "prioridad":   prioridad,
+                    "descripcion": descripcion[:120],
+                },
+            )
     except Exception as e:
-        # No se rompe la respuesta si WS falla
-        print(f"[WARN] Notificación WS fallida: {e}")
+        print(f"[WARN] Notificación fallida para nueva orden {folio}: {e}")

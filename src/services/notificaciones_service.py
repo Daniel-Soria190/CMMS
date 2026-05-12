@@ -4,10 +4,10 @@ from asyncpg import Pool
 async def crear_notificacion_y_notificar(pool: Pool, user_id: int, mensaje: str, tipo: str, data_incremental: dict = None):
     # 1. Persistir en PostgreSQL
     query = """
-        INSERT INTO notificaciones (idUsuario, mensaje, tipo, fechaCreacion, leida)
-        VALUES ($1, $2, $3, NOW(), FALSE)
-        RETURNING idNotificacion;
-    """
+    INSERT INTO public."Notificacion" ("idUsuario", "mensaje", "tipo", "leida")
+    VALUES ($1, $2, $3, FALSE)
+    RETURNING "idNotificacion";
+"""
     async with pool.acquire() as conn:
         notif_id = await conn.fetchval(query, user_id, mensaje, tipo)
 

@@ -91,6 +91,6 @@ class ReporteOrdenResponse(BaseModel):
     fechaSolicitud: datetime
     idEquipoInstalado: int
     creadoPorUsuario: Optional[int] = None
-    creadoPorExterno: Optional[int] = None
+    creadoPorReportante: Optional[int] = None  # ← era creadoPorExterno
     archivosSubidos: int = 0
     mensaje: str
