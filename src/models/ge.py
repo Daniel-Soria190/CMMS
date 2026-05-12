@@ -19,3 +19,8 @@ class antecedenteResponse(BaseModel):
     idAntecedentes:int
     promedioAverias:str
     factor:int
+
+class AreaResponse(BaseModel):
+    idArea:int
+    nombre:str
+    descripcion:str
