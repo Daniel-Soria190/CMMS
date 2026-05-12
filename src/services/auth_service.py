@@ -1,4 +1,5 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
+from typing import Optional
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.db.database import get_pool
 from datetime import datetime, timedelta,timezone
@@ -151,3 +152,25 @@ async def get_current_user_ws(token: str) -> dict | None:
     row = await get_idRol(id_usuario)
     
     return dict(row) if row else None
+
+async def get_usuario_opcional(
+    request: Request,
+) -> Optional[int]:
+    """
+    Extrae idUsuario del JWT si viene en Authorization: Bearer <token>.
+    No lanza error si no hay token — retorna None.
+    Úsalo como Depends() en endpoints públicos con trazabilidad opcional.
+    """
+    from fastapi import Request  # ya importado en el contexto de FastAPI
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header.removeprefix("Bearer ").strip()
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
+        id_usuario = payload.get("idUsuario")
+        if id_usuario is None:
+            return None
+        return int(id_usuario)
+    except (JWTError, ExpiredSignatureError):
+        return None
