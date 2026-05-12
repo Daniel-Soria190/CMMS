@@ -209,26 +209,27 @@ def build_inventory_query(
     # -----------------------------
     query = f"""
         SELECT
-            ei."idEquipoInstalado" AS id,
-            ei."numeroSerie",
-            e.nombre,
-            e.marca,
-            e.modelo,
-            e.descripcion,
-            ei.estado,
-            a.nombre AS area
-        FROM public."EquipoInstalado" ei
-        INNER JOIN public."Equipo" e
-            ON ei."idEquipo" = e."idEquipo"
-        INNER JOIN public."Area" a
-            ON ei."idArea" = a."idArea"
+        ei."idEquipoInstalado" AS id,
+        ei."idEquipo",
+        ei."numeroSerie",
+        e.nombre,
+        e.marca,
+        e.modelo,
+        e.descripcion,
+        ei.estado,
+        a.nombre AS area
+    FROM public."EquipoInstalado" ei
+    INNER JOIN public."Equipo" e
+        ON ei."idEquipo" = e."idEquipo"
+    INNER JOIN public."Area" a
+        ON ei."idArea" = a."idArea"
 
-        {where_clause}
+    {where_clause}
 
-        ORDER BY ei."idEquipoInstalado"
+    ORDER BY ei."idEquipoInstalado"
 
-        LIMIT {limit_placeholder}
-        OFFSET {offset_placeholder}
+    LIMIT {limit_placeholder}
+    OFFSET {offset_placeholder}
     """
 
     return query, values

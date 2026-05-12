@@ -32,4 +32,6 @@ class EquipoResponse(BaseModel):
     marca:str 
     modelo:str
     tiempoVidaEstimado: int|str|None
+    idFuncion: int|str|None
     idRiesgo: int|str|None
+    idReqMto: int|str|None

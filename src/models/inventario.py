@@ -35,6 +35,8 @@ class InventarioParams(BaseModel):
     expiracionGarantia:Optional[date]=None
 
 class SearchResponse(BaseModel):
+    id:int
+    idEquipo:int
     marca: str
     modelo: str
     nombre: str
