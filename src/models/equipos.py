@@ -6,7 +6,7 @@ class EquipoRequest(BaseModel):
     marca:str 
     modelo:str
     descripcion:str
-    t_vida:str
+    tiempoVidaEstimado:str
     idFuncion:int
     idRiesgo:int
     idReqMto:int
@@ -27,8 +27,11 @@ class EquipoParams(BaseModel):
     modelo: Optional[str] = None
 
 class EquipoResponse(BaseModel):
+    idEquipo:int
     nombre:str
     marca:str 
     modelo:str
     tiempoVidaEstimado: int|str|None
+    idFuncion: int|str|None
     idRiesgo: int|str|None
+    idReqMto: int|str|None

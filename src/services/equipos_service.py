@@ -172,7 +172,7 @@ async def set_equipo(equipo):
             equipo.marca, 
             equipo.modelo,
             equipo.descripcion, 
-            equipo.t_vida, 
+            equipo.tiempoVidaEstimado, 
             equipo.idFuncion, 
             equipo.idRiesgo, 
             equipo.idReqMto

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from fastapi import Query
+from pydantic import BaseModel, Field 
 from datetime import date
 from typing import Optional
 
@@ -33,4 +34,26 @@ class InventarioParams(BaseModel):
     garantia:Optional[bool]=None
     expiracionGarantia:Optional[date]=None
 
+class SearchResponse(BaseModel):
+    id:int
+    idEquipo:int
+    marca: str
+    modelo: str
+    nombre: str
+    numeroSerie: str
+    area: str
+    estado: str
+    descripcion:str 
 
+
+class SearchParams(BaseModel):
+    marca: Optional[str] = None
+    modelo: Optional[str] = None
+    nombre: Optional[str] = None
+    numeroSerie: Optional[str] = None
+    area: Optional[str] = None
+    estado: Optional[str] = None
+
+class InventarioResponse(BaseModel):
+    numeroSerie: str
+    estado: str

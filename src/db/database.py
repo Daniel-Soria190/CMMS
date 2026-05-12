@@ -138,3 +138,98 @@ def build_dynamic_query(params: dict, whitelist: list) -> tuple[str, list]:
 #        where_clause = " WHERE " + " AND ".join(conditions)
 #    
 #    return where_clause, values
+
+
+
+
+SEARCH_FIELDS = {
+    "marca": 'e.marca',
+    "modelo": 'e.modelo',
+    "nombre": 'e.nombre',
+    "numeroSerie": 'ei."numeroSerie"',
+    "area": 'a.nombre',
+    "estado": 'ei.estado'
+}
+
+
+def build_inventory_query(
+    params,
+    limit: int = 10,
+    offset: int = 0
+):
+    conditions = []
+    values = []
+    counter = 1
+
+    for key, value in params.items():
+
+        if key not in SEARCH_FIELDS:
+            continue
+
+        if value is None:
+            continue
+
+        column = SEARCH_FIELDS[key]
+
+        conditions.append(f"{column} ILIKE ${counter}")
+        values.append(f"%{value}%")
+
+        counter += 1
+
+    # -----------------------------
+    # WHERE dinámico
+    # -----------------------------
+    where_clause = ""
+
+    if conditions:
+        where_clause = "WHERE " + " AND ".join(conditions)
+
+        # Agregamos filtros fijos
+        where_clause += """
+            AND ei."isDeleted" = false
+            AND e."isDeleted" = false
+        """
+    else:
+        where_clause = """
+            WHERE ei."isDeleted" = false
+            AND e."isDeleted" = false
+        """
+
+    # -----------------------------
+    # LIMIT y OFFSET
+    # -----------------------------
+    limit_placeholder = f"${counter}"
+    offset_placeholder = f"${counter + 1}"
+
+    values.append(limit)
+    values.append(offset)
+
+    # -----------------------------
+    # QUERY FINAL
+    # -----------------------------
+    query = f"""
+        SELECT
+        ei."idEquipoInstalado" AS id,
+        ei."idEquipo",
+        ei."numeroSerie",
+        e.nombre,
+        e.marca,
+        e.modelo,
+        e.descripcion,
+        ei.estado,
+        a.nombre AS area
+    FROM public."EquipoInstalado" ei
+    INNER JOIN public."Equipo" e
+        ON ei."idEquipo" = e."idEquipo"
+    INNER JOIN public."Area" a
+        ON ei."idArea" = a."idArea"
+
+    {where_clause}
+
+    ORDER BY ei."idEquipoInstalado"
+
+    LIMIT {limit_placeholder}
+    OFFSET {offset_placeholder}
+    """
+
+    return query, values
