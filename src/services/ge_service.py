@@ -2,6 +2,24 @@ from fastapi import HTTPException
 from src.db.database import get_pool
 from src.services.auth_service import generate_JWT, decode_JWT
 
+async def get_area ():
+    pool= await get_pool()
+    
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB no inicializada") 
+    
+    async with pool.acquire() as conn:    
+        rows = await conn.fetch(
+           """
+            SELECT "idArea", nombre, descripcion
+	        FROM public."Area";
+            """     
+        )
+        
+        areadata= [dict(row) for row in rows]
+        return areadata
+
+
 async def get_funcion ():
     pool= await get_pool()
     
