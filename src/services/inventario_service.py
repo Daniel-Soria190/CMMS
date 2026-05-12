@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from src.db.database import get_pool, build_dynamic_query
+from src.db.database import get_pool, build_dynamic_query,build_inventory_query
 from src.services.auth_service import generate_JWT, decode_JWT   
 
 #========================================================================
@@ -38,8 +38,44 @@ async def update(id, data):
 
 #========================================================================
 
+async def join_inventario(params:dict, limit,offset):
+    pool = await get_pool()
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB no inicializada")
+
+    # 1. Definir columnas permitidas
+    # WHITELIST = [  "idEquipo" ,  "numeroSerie" , 
+    #               "estado" , "fechaIngreso" ,
+    #               "idArea" , "garantia" ,
+    #               "expiracionGarantia" ]
+    
+
+    # 2. Construir WHERE dinámico
+    query,values = build_inventory_query(params,limit,offset)
+
+    # 3. Construir query final con paginación
+    # Importante: El LIMIT y OFFSET también usan placeholders por seguridad
+    # sql = f"""
+    #     SELECT * FROM public."EquipoInstalado"
+    #     {where_str}
+    #     ORDER BY "idEquipoInstalado"  -- Recomendado para que la paginación sea consistente
+    #     LIMIT ${len(values) + 1} OFFSET ${len(values) + 2}
+    # """
+    
+    # Añadimos los valores de paginación a la lista de argumentos
+    # full_values = [*values, limit, offset]
+
+    rows = await pool.fetch(query, *values)
+    
+    if not rows:
+        # Nota: Es mejor devolver lista vacía [] que un 404 en búsquedas, 
+        # pero mantengo tu lógica si así lo prefieres.
+        raise HTTPException(status_code=404, detail= "Equipo no encontrado")
+
+    return [dict(row) for row in rows]
 
 
+#====================================================================
 async def search(params: dict, limit: int = 10, offset: int = 0):
     pool = await get_pool()
     if pool is None:
