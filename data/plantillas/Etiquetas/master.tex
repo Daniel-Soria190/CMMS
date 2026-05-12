@@ -1,0 +1,70 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=5mm]{geometry}
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{fancyqr} % Paquete para QRs con logos
+\usepackage{tikz}
+
+\setlength{\columnsep}{5mm}
+\pagestyle{empty}
+
+% Configuración de fancyqr
+% r-roundness: redondeado de los módulos (0 a 1)
+% L: Nivel de corrección de error (H es el más alto)
+\fancyqrset{
+    height=3.5cm,
+    level=H,
+    image=\includegraphics{logo.png},
+    image size=0.25 % El logo ocupará el 25% del QR
+}
+
+% ---- Comando de etiqueta ----
+\newcommand{\etiqueta}[5]{
+	\noindent
+	\begin{tcolorbox}[
+		width=\linewidth,
+		height=6cm,
+		colframe=black,
+		colback=white,
+		boxrule=0.8pt,
+		sharp corners,
+		valign=center,
+		breakable=false
+		]
+		
+		\begin{minipage}{0.6\linewidth}
+			\begin{tcolorbox}[boxrule=0.5pt, left=2pt, right=2pt, top=2pt, bottom=2pt]
+				\textbf{Marca:}\\ #1
+			\end{tcolorbox}
+			
+			\begin{tcolorbox}[boxrule=0.5pt, left=2pt, right=2pt, top=2pt, bottom=2pt]
+				\textbf{Modelo:}\\ #2
+			\end{tcolorbox}
+			
+			\begin{tcolorbox}[boxrule=0.5pt, left=2pt, right=2pt, top=2pt, bottom=2pt]
+				\textbf{Número de Serie:}\\ #3
+			\end{tcolorbox}
+			
+			\begin{tcolorbox}[boxrule=0.5pt, left=2pt, right=2pt, top=2pt, bottom=2pt]
+				\textbf{Área:}\\ #4
+			\end{tcolorbox}
+		\end{minipage}
+		\hfill
+		\begin{minipage}{0.35\linewidth}
+			\centering
+			\fancyqr{#5}
+		\end{minipage}
+		
+	\end{tcolorbox}
+	\vspace{2mm}
+}
+
+\begin{document}
+	\begin{multicols}{2}
+		\input{equipos.tex}
+	\end{multicols}
+\end{document}
