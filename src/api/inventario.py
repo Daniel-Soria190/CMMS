@@ -20,8 +20,8 @@ router = APIRouter(prefix="/inventario", tags=["inventario"])
 async def join_invent(
     filters: SearchParams=Depends(),
     limit: int = Query(10, ge=1, le=50),
-    page: int = Query(1, ge=1),
-    current_user: dict = Depends(require_role(5)) 
+    page: int = Query(1, ge=1)
+    #current_user: dict = Depends(require_role(5)) 
 ):
     offset = (page - 1) * limit
     
