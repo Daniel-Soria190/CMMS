@@ -212,7 +212,7 @@ class CalendarioDiaResponse(BaseModel):
         Check estado = 'finalizada'
     """
     por_asignar: list[CalendarioItem]
-    asignada:    list[CalendarioItem]
+    pendientes:    list[CalendarioItem]
     en_proceso:  list[CalendarioItem]
     finalizado:  list[CalendarioItem]
 
@@ -233,7 +233,7 @@ class ResumenDia(BaseModel):
         Cantidad de OTs cerradas ese día específico.
     """
     por_asignar: int
-    asignada:    int
+    pendientes:    int
     en_proceso:  int
     finalizado:  int
 
@@ -249,7 +249,7 @@ class CalendarioSemanaResponse(BaseModel):
     --------
     {
         "dias": {
-            "2026-05-11": { "por_asignar": 1, "asignada": 0, "en_proceso": 2, "finalizado": 1 },
+            "2026-05-11": { "por_asignar": 1, "pendientes": 0, "en_proceso": 2, "finalizado": 1 },
             ...
         }
     }

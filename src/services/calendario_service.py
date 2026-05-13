@@ -182,7 +182,7 @@ async def _ejecutar_queries_dia(
 
     return {
         "por_asignar": [dict(r) for r in rows_por_asignar],
-        "asignada":    [dict(r) for r in rows_asignada],
+        "pendientes":    [dict(r) for r in rows_asignada],
         "en_proceso":  [dict(r) for r in rows_en_proceso],
         "finalizado":  [dict(r) for r in rows_finalizado],
     }
@@ -270,7 +270,7 @@ def _construir_resumen_rango(
         dia = (fecha_inicio + timedelta(days=i)).isoformat()
         resultado[dia] = {
             "por_asignar": datos["por_asignar"],
-            "asignada":    datos["asignada"],
+            "pendientes":    datos["asignada"],
             "en_proceso":  datos["en_proceso"],
             "finalizado":  datos["finalizado_por_dia"].get(dia, 0),
         }
