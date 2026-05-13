@@ -18,25 +18,20 @@ router = APIRouter(prefix="/calendario", tags=["calendario"])
 @router.get(
     "/dia",
     response_model=CalendarioDiaResponse,
-    summary="Órdenes de trabajo para un día específico",
+    summary="Detalle completo de órdenes para un día — tablero kanban",
 )
 async def calendario_dia(
-    fecha: date = Query(..., description="Fecha consultada. Formato: YYYY-MM-DD"),
+    fecha: date = Query(..., description="Día consultado. Formato: YYYY-MM-DD"),
     current_user: dict = Depends(require_role(5)),
 ):
     """
-    Retorna pendientes, en proceso y finalizadas para el día indicado.
+    Retorna las 4 columnas del kanban para el día indicado.
 
     Acceso:
     -------
-    Rol 1 (Admin)          → todas las órdenes.
-    Rol 2 (Enc. de Área)   → solo equipos de su área.
-    Rol >= 3 (Técnico)     → solo sus órdenes asignadas.
-
-    Parámetros:
-    -----------
-    fecha : date
-        Día a consultar. Formato YYYY-MM-DD.
+    Rol 1 (Admin)         → todas las órdenes, incluye por_asignar.
+    Rol 2 (Enc. de Área)  → equipos de su área, incluye por_asignar.
+    Rol >= 3 (Técnico)    → sus órdenes, por_asignar siempre vacío.
     """
     return await get_calendario_dia(
         fecha=fecha,
@@ -49,16 +44,15 @@ async def calendario_dia(
 @router.get(
     "/semana",
     response_model=CalendarioSemanaResponse,
-    summary="Órdenes agrupadas por día para la semana que contiene la fecha",
+    summary="Conteos por día para la semana — widget semanal",
 )
 async def calendario_semana(
     fecha: date = Query(..., description="Cualquier día de la semana. Formato: YYYY-MM-DD"),
     current_user: dict = Depends(require_role(5)),
 ):
     """
-    Retorna un objeto con clave por día (lunes a domingo)
-    con sus respectivas categorías de órdenes.
-    Usado por WidgetCalendario.qml.
+    Retorna conteos numéricos por categoría para cada día de la semana.
+    Usado por WidgetCalendario.qml para pintar los badges.
     """
     return await get_calendario_semana(
         fecha=fecha,
@@ -71,16 +65,15 @@ async def calendario_semana(
 @router.get(
     "/mes",
     response_model=CalendarioMesResponse,
-    summary="Órdenes agrupadas por día para el mes completo",
+    summary="Conteos por día para el mes completo — widget mensual",
 )
 async def calendario_mes(
     fecha: date = Query(..., description="Cualquier día del mes. Formato: YYYY-MM-DD"),
     current_user: dict = Depends(require_role(5)),
 ):
     """
-    Retorna un objeto con clave por cada día del mes
-    con sus respectivas categorías de órdenes.
-    Usado por Calendario.qml.
+    Retorna conteos numéricos por categoría para cada día del mes.
+    Usado por Calendario.qml para pintar cada celda del grid.
     """
     return await get_calendario_mes(
         fecha=fecha,

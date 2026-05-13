@@ -140,9 +140,11 @@ class AsignarOrdenResponse(BaseModel):
 from datetime import date
 
 
+# ── Reemplazar los modelos de calendario existentes ───────────────────────────
+
 class CalendarioItem(BaseModel):
     """
-    Representa una orden de trabajo en el calendario.
+    Representa una orden de trabajo en el tablero diario.
 
     Campos:
     -------
@@ -152,23 +154,22 @@ class CalendarioItem(BaseModel):
         FK → EquipoInstalado.idEquipoInstalado
     idMantenimiento : Optional[int]
         FK → Mantenimiento.idMantenimiento
-        Solo presente en categorías 'mantenimiento' y 'finalizado'.
-    folio : str
+        Solo presente en 'en_proceso' y 'finalizado'.
+    folio : Optional[str]
         Identificador legible. Formato: OT-YYYY-NNNNN
     nombre : str
         Nombre del equipo. FK → Equipo.nombre
     NoSerie : str
-        Número de serie de la instancia física.
         UK → EquipoInstalado.numeroSerie
-    Ubicacion : str
+    Ubicacion : Optional[str]
         Ubicación física del equipo instalado.
     falla : Optional[str]
-        Descripción del fallo. Solo en categoría 'pendientes'.
+        Descripción del fallo. Solo en 'por_asignar' y 'asignada'.
     tecnico : Optional[str]
-        Nombre completo del técnico asignado. Solo en 'mantenimiento'.
+        Nombre completo del técnico. Solo en 'en_proceso'.
         FK → Usuario.idUsuario via OrdenTrabajo.asignadoA
     nota : Optional[str]
-        Descripción del trabajo realizado. Solo en 'finalizado'.
+        Descripción del trabajo. Solo en 'finalizado'.
         FK → Mantenimiento.descripcionTrabajo
     """
     idOrden:           int
@@ -185,45 +186,82 @@ class CalendarioItem(BaseModel):
 
 class CalendarioDiaResponse(BaseModel):
     """
-    Respuesta de GET /calendario/dia y cada día en /semana y /mes.
+    Respuesta de GET /calendario/dia — detalle completo del día.
+
+    Columnas para Admin/Encargado (idRol <= 2):
+        por_asignar, asignada, en_proceso, finalizado
+
+    Columnas para Técnico (idRol >= 3):
+        por_asignar y asignada siempre vacíos.
+        Solo ve en_proceso y finalizado de sus órdenes.
 
     Campos:
     -------
-    pendientes : list[CalendarioItem]
-        OTs con estado 'por_asignar' o 'asignada'
-        cuya fechaSolicitud <= fecha consultada.
-        Incluye órdenes atrasadas de días anteriores.
-    mantenimiento : list[CalendarioItem]
-        OTs con estado 'en_proceso' sin restricción de fecha.
+    por_asignar : list[CalendarioItem]
+        OTs sin técnico asignado con fechaSolicitud <= fecha consultada.
+        Check estado = 'por_asignar'
+    asignada : list[CalendarioItem]
+        OTs asignadas pero no iniciadas con fechaSolicitud <= fecha consultada.
+        Check estado = 'asignada'
+    en_proceso : list[CalendarioItem]
+        OTs actualmente en trabajo. Sin restricción de fecha.
+        Check estado = 'en_proceso'
     finalizado : list[CalendarioItem]
-        OTs con estado 'finalizada' cuya fechaCierre
-        cae dentro del periodo consultado.
+        OTs cerradas ese mismo día.
+        fechaCierre::date = fecha consultada.
+        Check estado = 'finalizada'
     """
-    pendientes:    list[CalendarioItem]
-    mantenimiento: list[CalendarioItem]
-    finalizado:    list[CalendarioItem]
+    por_asignar: list[CalendarioItem]
+    asignada:    list[CalendarioItem]
+    en_proceso:  list[CalendarioItem]
+    finalizado:  list[CalendarioItem]
+
+
+class ResumenDia(BaseModel):
+    """
+    Conteos por categoría para un día — usado en widgets semana y mes.
+
+    Campos:
+    -------
+    por_asignar : int
+        Cantidad de OTs sin asignar acumuladas hasta ese día.
+    asignada : int
+        Cantidad de OTs asignadas no iniciadas.
+    en_proceso : int
+        Cantidad de OTs actualmente en trabajo.
+    finalizado : int
+        Cantidad de OTs cerradas ese día específico.
+    """
+    por_asignar: int
+    asignada:    int
+    en_proceso:  int
+    finalizado:  int
 
 
 class CalendarioSemanaResponse(BaseModel):
     """
     Respuesta de GET /calendario/semana.
-    Objeto con clave YYYY-MM-DD por cada día de la semana.
+    Conteos por día para los 7 días de la semana (lunes a domingo).
+
+    Usado por WidgetCalendario.qml para pintar badges numéricos.
 
     Ejemplo:
     --------
     {
-        "2026-05-11": { "pendientes": [], "mantenimiento": [], "finalizado": [] },
-        "2026-05-12": { ... },
-        ...
+        "dias": {
+            "2026-05-11": { "por_asignar": 1, "asignada": 0, "en_proceso": 2, "finalizado": 1 },
+            ...
+        }
     }
     """
-    dias: dict[str, CalendarioDiaResponse]
+    dias: dict[str, ResumenDia]
 
 
 class CalendarioMesResponse(BaseModel):
     """
     Respuesta de GET /calendario/mes.
-    Objeto con clave YYYY-MM-DD por cada día del mes.
-    Usado por el widget Calendario.qml para pintar cada celda.
+    Conteos por día para todos los días del mes.
+
+    Usado por Calendario.qml para pintar cada celda del grid mensual.
     """
-    dias: dict[str, CalendarioDiaResponse]
+    dias: dict[str, ResumenDia]
