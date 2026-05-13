@@ -135,3 +135,95 @@ class AsignarOrdenResponse(BaseModel):
     estado: str
     asignadoA: int
     mensaje: str
+
+
+from datetime import date
+
+
+class CalendarioItem(BaseModel):
+    """
+    Representa una orden de trabajo en el calendario.
+
+    Campos:
+    -------
+    idOrden : int
+        PK → OrdenTrabajo.idOrden
+    idEquipoInstalado : int
+        FK → EquipoInstalado.idEquipoInstalado
+    idMantenimiento : Optional[int]
+        FK → Mantenimiento.idMantenimiento
+        Solo presente en categorías 'mantenimiento' y 'finalizado'.
+    folio : str
+        Identificador legible. Formato: OT-YYYY-NNNNN
+    nombre : str
+        Nombre del equipo. FK → Equipo.nombre
+    NoSerie : str
+        Número de serie de la instancia física.
+        UK → EquipoInstalado.numeroSerie
+    Ubicacion : str
+        Ubicación física del equipo instalado.
+    falla : Optional[str]
+        Descripción del fallo. Solo en categoría 'pendientes'.
+    tecnico : Optional[str]
+        Nombre completo del técnico asignado. Solo en 'mantenimiento'.
+        FK → Usuario.idUsuario via OrdenTrabajo.asignadoA
+    nota : Optional[str]
+        Descripción del trabajo realizado. Solo en 'finalizado'.
+        FK → Mantenimiento.descripcionTrabajo
+    """
+    idOrden:           int
+    idEquipoInstalado: int
+    idMantenimiento:   Optional[int] = None
+    folio:             Optional[str] = None
+    nombre:            str
+    NoSerie:           str
+    Ubicacion:         Optional[str] = None
+    falla:             Optional[str] = None
+    tecnico:           Optional[str] = None
+    nota:              Optional[str] = None
+
+
+class CalendarioDiaResponse(BaseModel):
+    """
+    Respuesta de GET /calendario/dia y cada día en /semana y /mes.
+
+    Campos:
+    -------
+    pendientes : list[CalendarioItem]
+        OTs con estado 'por_asignar' o 'asignada'
+        cuya fechaSolicitud <= fecha consultada.
+        Incluye órdenes atrasadas de días anteriores.
+    mantenimiento : list[CalendarioItem]
+        OTs con estado 'en_proceso' sin restricción de fecha.
+    finalizado : list[CalendarioItem]
+        OTs con estado 'finalizada' cuya fechaCierre
+        cae dentro del periodo consultado.
+    """
+    pendientes:    list[CalendarioItem]
+    mantenimiento: list[CalendarioItem]
+    finalizado:    list[CalendarioItem]
+
+
+class CalendarioSemanaResponse(BaseModel):
+    """
+    Respuesta de GET /calendario/semana.
+    Objeto con clave YYYY-MM-DD por cada día de la semana.
+
+    Ejemplo:
+    --------
+    {
+        "2026-05-11": { "pendientes": [], "mantenimiento": [], "finalizado": [] },
+        "2026-05-12": { ... },
+        ...
+    }
+    """
+    dias: dict[str, CalendarioDiaResponse]
+
+
+class CalendarioMesResponse(BaseModel):
+    """
+    Respuesta de GET /calendario/mes.
+    Objeto con clave YYYY-MM-DD por cada día del mes.
+    Usado por el widget Calendario.qml para pintar cada celda.
+    """
+    dias: dict[str, CalendarioDiaResponse]
