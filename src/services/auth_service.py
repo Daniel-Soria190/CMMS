@@ -49,11 +49,26 @@ def expires_JWT():
     pass
 
 async def get_idRol(id_usuario):
+    """
+    Obtiene el rol y área del usuario para incluir en el payload del JWT.
+
+    Parámetros:
+    -----------
+    id_usuario : int
+        FK → Usuario.idUsuario
+
+    Retorna:
+    --------
+    dict con idRol, rol (nombre), idArea
+    """
     pool = await get_pool()
 
     row = await pool.fetchrow(
         """
-        SELECT "Usuario"."idRol", "Rol"."nombre" AS rol
+        SELECT 
+            "Usuario"."idRol",
+            "Usuario"."idArea",
+            "Rol"."nombre" AS rol
         FROM "Usuario"
         JOIN "Rol" ON "Rol"."idRol" = "Usuario"."idRol"
         WHERE "Usuario"."idUsuario" = $1
@@ -68,10 +83,19 @@ async def get_idRol(id_usuario):
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ) -> dict:
-    token = credentials.credentials
-    # pool = await get_pool()
+    """
+    Valida el JWT y retorna los datos del usuario actual.
 
-    # 1. Decodificar JWT
+    Retorna:
+    --------
+    dict con idUsuario, idRol, idArea, rol (nombre del rol)
+
+    Errores:
+    --------
+    401 — Token inválido, expirado o usuario no encontrado.
+    """
+    token = credentials.credentials
+
     try:
         payload = jwt.decode(token, SECRET, algorithms=[ALGORITHM])
         id_usuario: int = payload.get("idUsuario")
@@ -90,7 +114,6 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 2. Buscar usuario y su rol en la BD
     row = await get_idRol(id_usuario)
 
     if row is None:
@@ -99,8 +122,12 @@ async def get_current_user(
             detail="Usuario no encontrado",
         )
 
-    # Retorna: {'idRol': 2, 'rol': 'Encargado de Area'}
-    return dict(row)
+    return {
+        "idUsuario": id_usuario,
+        "idRol":     row["idRol"],
+        "idArea":    row["idArea"],
+        "rol":       row["rol"],
+    }
 
 def require_role(id_rol_minimo: int):
     """
