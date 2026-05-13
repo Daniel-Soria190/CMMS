@@ -3,3 +3,4 @@ Build/
 build/
 .env
 .vscode
+venv_test/
