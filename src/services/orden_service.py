@@ -295,3 +295,164 @@ async def _notificar_admins_nueva_orden(
             )
     except Exception as e:
         print(f"[WARN] Notificación fallida para nueva orden {folio}: {e}")
+
+
+# ==================================================================================
+
+async def asignar_orden(id_orden: int, id_asignado: int) -> dict:
+    """
+    Asigna un técnico a una orden de trabajo y crea el registro de Mantenimiento.
+
+    Parámetros:
+    -----------
+    id_orden : int
+        PK de OrdenTrabajo. Debe existir y estar en estado 'por_asignar'.
+        FK → OrdenTrabajo.idOrden
+    id_asignado : int
+        PK del usuario técnico.
+        FK → Usuario.idUsuario
+
+    Operaciones:
+    ------------
+    1. Valida que la OT existe y su estado es 'por_asignar'.
+       Check: estado IN ('por_asignar','asignada','en_proceso','finalizada','cancelada')
+    2. Valida que el usuario existe en la tabla Usuario.
+    3. Actualiza OrdenTrabajo:
+       - asignadoA = id_asignado
+       - estado    = 'asignada'
+    4. Crea registro en Mantenimiento:
+       - idOrden      = id_orden
+       - tipo         = tipoOrden de la OT (correctiva | preventiva | inspeccion)
+       - realizadoPor = id_asignado
+       - externo      = false
+       - fechaInicio  = NULL (el técnico la llena al iniciar)
+    5. Notifica al técnico por WS usando crear_notificacion_y_notificar.
+
+    Retorna:
+    --------
+    dict con idOrden, idMantenimiento, folio, estado, asignadoA, mensaje.
+
+    Errores:
+    --------
+    404 — OT no encontrada.
+    409 — OT no está en estado 'por_asignar'.
+    404 — Usuario asignado no encontrado.
+    500 — DB no inicializada.
+    """
+    pool = await get_pool()
+    if pool is None:
+        raise HTTPException(status_code=500, detail="DB no inicializada")
+
+    async with pool.acquire() as conn:
+
+        # ── 1. Verificar que la OT existe y está en estado correcto ──────────
+        orden = await conn.fetchrow(
+            """
+            SELECT "idOrden", "folio", "estado", "tipoOrden"
+            FROM public."OrdenTrabajo"
+            WHERE "idOrden" = $1
+            """,
+            id_orden,
+        )
+        if orden is None:
+            raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada.")
+
+        if orden["estado"] != "por_asignar":
+            raise HTTPException(
+                status_code=409,
+                detail=f"La orden no puede asignarse porque está en estado '{orden['estado']}'.",
+            )
+
+        # ── 2. Verificar que el usuario existe ───────────────────────────────
+        usuario = await conn.fetchval(
+            """
+            SELECT "idUsuario" FROM public."Usuario"
+            WHERE "idUsuario" = $1
+            """,
+            id_asignado,
+        )
+        if usuario is None:
+            raise HTTPException(status_code=404, detail="El usuario asignado no existe.")
+
+        # ── 3. Actualizar OrdenTrabajo ────────────────────────────────────────
+        await conn.execute(
+            """
+            UPDATE public."OrdenTrabajo"
+            SET "asignadoA" = $1,
+                "estado"    = 'asignada'
+            WHERE "idOrden" = $2
+            """,
+            id_asignado,
+            id_orden,
+        )
+
+        # ── 4. Crear registro en Mantenimiento ────────────────────────────────
+        id_mantenimiento = await conn.fetchval(
+            """
+            INSERT INTO public."Mantenimiento"(
+                "idOrden",
+                "tipo",
+                "realizadoPor",
+                "externo"
+            )
+            VALUES ($1, $2, $3, false)
+            RETURNING "idMantenimiento"
+            """,
+            id_orden,
+            orden["tipoOrden"],
+            id_asignado,
+        )
+
+    # ── 5. Notificar al técnico por WS ────────────────────────────────────────
+    await _notificar_tecnico_asignado(
+        pool=pool,
+        id_usuario=id_asignado,
+        id_orden=id_orden,
+        folio=orden["folio"],
+    )
+
+    return {
+        "idOrden":         id_orden,
+        "idMantenimiento": id_mantenimiento,
+        "folio":           orden["folio"],
+        "estado":          "asignada",
+        "asignadoA":       id_asignado,
+        "mensaje":         f"Orden {orden['folio']} asignada correctamente.",
+    }
+
+
+async def _notificar_tecnico_asignado(
+    pool, id_usuario: int, id_orden: int, folio: str
+):
+    """
+    Persiste notificación en DB y envía WS al técnico asignado.
+
+    Parámetros:
+    -----------
+    pool : asyncpg.Pool
+    id_usuario : int
+        FK → Usuario.idUsuario del técnico a notificar.
+    id_orden : int
+        FK → OrdenTrabajo.idOrden de referencia.
+    folio : str
+        Folio legible de la OT para el mensaje.
+
+    Nota:
+    -----
+    Fallo en esta función no revierte la asignación — se captura
+    silenciosamente para no afectar la respuesta principal.
+    """
+    try:
+        await crear_notificacion_y_notificar(
+            pool=pool,
+            user_id=id_usuario,
+            mensaje=f"Se te ha asignado la orden {folio}.",
+            tipo="orden_asignada",
+            data_incremental={
+                "evento":  "orden_asignada",
+                "folio":   folio,
+                "idOrden": id_orden,
+            },
+        )
+    except Exception as e:
+        print(f"[WARN] Notificación WS fallida para técnico {id_usuario}: {e}")

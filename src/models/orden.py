@@ -94,3 +94,44 @@ class ReporteOrdenResponse(BaseModel):
     creadoPorReportante: Optional[int] = None  # ← era creadoPorExterno
     archivosSubidos: int = 0
     mensaje: str
+
+class AsignarOrdenRequest(BaseModel):
+    """
+    Body para PATCH /orden/{idOrden}/asignar.
+
+    Campos:
+    -------
+    asignadoA : int
+        FK → Usuario.idUsuario
+        Técnico o ingeniero que ejecutará el mantenimiento.
+        Debe existir en la tabla Usuario.
+    """
+    asignadoA: int
+
+
+class AsignarOrdenResponse(BaseModel):
+    """
+    Respuesta de PATCH /orden/{idOrden}/asignar.
+
+    Campos:
+    -------
+    idOrden : int
+        PK de la orden de trabajo actualizada.
+    idMantenimiento : int
+        PK del registro Mantenimiento creado automáticamente.
+    folio : str
+        Folio legible de la OT. Formato: OT-YYYY-NNNNN.
+    estado : str
+        Nuevo estado de la OT.
+        Check: ('por_asignar', 'asignada', 'en_proceso', 'finalizada', 'cancelada')
+    asignadoA : int
+        FK → Usuario.idUsuario del técnico asignado.
+    mensaje : str
+        Confirmación legible de la operación.
+    """
+    idOrden: int
+    idMantenimiento: int
+    folio: str
+    estado: str
+    asignadoA: int
+    mensaje: str
