@@ -16,11 +16,14 @@ class ordenRequest(BaseModel):
     creadoporext:int
 
 class ordenUpdate(BaseModel):
-    descripcionFallo: Optional[str] = None
-    prioridad: Optional[str] = None
+    # descripcionFallo: Optional[str] = None
+    # prioridad: Optional[str] = None
     estado:Optional[str]=None
-    fechaEntrega:Optional[datetime]=None
-    asignadoA:Optional[int]=None
+    # fechaEntrega:Optional[datetime]=None
+    # asignadoA:Optional[int]=None
+    diagnostico:Optional[str]=None
+    descripcionServicio:Optional[str]=None
+    observaciones:Optional[str]=None
 
 class ordenParams(BaseModel):
 
