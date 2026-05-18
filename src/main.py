@@ -11,7 +11,7 @@ from src.api.websockets import router as ws_router
 from src.api.ordenes import router as ordenes_router
 from src.api.auth import router as auth_router
 from src.api.calendario import router as calendario_router
-
+from src.api.planes import router as planes_router
 
 from src.api.inventario import router as invent_router
 from src.api.mantenimiento import router as mantto_router
@@ -54,6 +54,7 @@ app.include_router(mantto_router)
 app.include_router(invent_router)
 app.include_router(orden_router)
 app.include_router(calendario_router)
+app.include_router(planes_router)
 
 
 @app.get("/")
